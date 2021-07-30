@@ -1,0 +1,800 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://greatewei.github.io</id>
+    <title>Great Wei</title>
+    <updated>2021-07-30T06:10:41.702Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://greatewei.github.io"/>
+    <link rel="self" href="https://greatewei.github.io/atom.xml"/>
+    <logo>https://greatewei.github.io/images/avatar.png</logo>
+    <icon>https://greatewei.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2021, Great Wei</rights>
+    <entry>
+        <title type="html"><![CDATA[Croc文件传输工具]]></title>
+        <id>https://greatewei.github.io/post/croc-wen-jian-chuan-shu-gong-ju/</id>
+        <link href="https://greatewei.github.io/post/croc-wen-jian-chuan-shu-gong-ju/">
+        </link>
+        <updated>2021-07-17T09:53:28.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="什么是croc">什么是croc</h1>
+<p>croc是一种允许任意两台计算机简单安全地传输文件和文件夹的工具。AFAIK，croc是唯一可以执行以下所有操作的CLI 文件传输工具：</p>
+<h1 id="croc适用场景">croc适用场景</h1>
+<p>允许任意两台计算机传输数据（使用中继）<br>
+提供端到端加密（使用 PAKE）<br>
+实现轻松的跨平台传输（Windows、Linux、Mac）<br>
+允许多个文件传输<br>
+允许恢复被中断的传输<br>
+不需要本地服务器或端口转发<br>
+ipv6 优先和 ipv4 回退<br>
+可以使用代理，比如tor</p>
+<h1 id="使用方法">使用方法</h1>
+<figure data-type="image" tabindex="1"><img src="https://i.loli.net/2021/07/29/g4Y9PaZHt6dOKDe.gif" alt="Jul-29-2021 13-58-18.gif" loading="lazy"></figure>
+<h1 id="croc源码分析">croc源码分析</h1>
+<h2 id="文件传输过程">文件传输过程</h2>
+<p>我们可能会好奇，为什么我执行了croc xxx 就能接收到其他机器发送的文件呢<br>
+经过源码分析发现，传输过程主要有三个角色，sender，relay,  receive</p>
+<h3 id="sender">sender</h3>
+<p>当我执行croc send hosts的时候本地会启动一个sender，sender内部会启动对外服务的端口，创建一个room， 一个room只允许存在两个连接，一个发送者，一个接收者，此时还未出现接收者，所以room内需要保持发送者的连接，同时会生成一个room的code与password(可选项)，并且将room外网地址， code 发送至 relay服务中，如果未设置relay服务，默认使用 croc.schollz.com:9009(可自行搭建)</p>
+<h3 id="relay">relay</h3>
+<p>存储着room的信息，能让接收者通过code查找到连接地址</p>
+<h3 id="receive">receive</h3>
+<p>croc code 可以添加--relay参数指定relay， 如果未指定默认使用croc.schollz.com:9009， relay查找到code对应的sender的连接地址，reveive连接上sender的指定room， 输入password(可选)，进入room后此时存在两个连接了，sender开始将文件数据传输给receive，结束后断开连接，关闭room</p>
+<h2 id="如何实现断点续传">如何实现断点续传</h2>
+<p>上传过程中记录偏移，读取文件直接seek到指定位置开始读取数据，进行文件传输</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[AWS lambda实现s3图片资源数据万象]]></title>
+        <id>https://greatewei.github.io/post/aws-lambda-shi-xian-s3-tu-pian-zi-yuan-shu-ju-wan-xiang/</id>
+        <link href="https://greatewei.github.io/post/aws-lambda-shi-xian-s3-tu-pian-zi-yuan-shu-ju-wan-xiang/">
+        </link>
+        <updated>2021-03-03T09:55:40.000Z</updated>
+        <content type="html"><![CDATA[<p><a href="https://zoufeng.net/2020/08/30/best-practices-for-using-lambdaedge-to-process-images-on-aws/">详细步骤:</a></p>
+<h1 id="00x1-什么是数据万象">00x1 什么是数据万象</h1>
+<p>前端可通过原有的cdn链接后添加相应的图片操作参数即可实现动态的进行图片资源操作(图片缩放，裁剪，质量缩放，水印，文件类型转换)<br>
+eg: https://www.greatwei.com/1.png  =&gt; https://www.greatwei.com/1.png@200h_300w_20x20x100x100c.jpg<br>
+这样的链接即可获取1.png 高200， 宽300， 左上角20，20位置开始裁剪裁剪100x100大小的图片，并且图片类型转换成jpg的图片</p>
+<hr>
+<h1 id="00x2-如何实现">00x2 如何实现</h1>
+<h2 id="cdn请求过程">Cdn请求过程</h2>
+<p><img src="https://i.loli.net/2021/07/29/GuFoqrnUVyEg7Qe.png" alt="image2020-8-25_11-43-19.png" loading="lazy"><br>
+如图，cdn请求过程存在四条链路，我们可以根据自己的需求在指定路径挂载lambda函数触发，本次方案采用的是在路径3设置图片处理函数(aws支持nodejs, go, python来实现函数)， 基本过程，路径3接收获取资源失败的相关信息，解析文件路径获取原图，进行图片资源操作，将处理后的数据同步返回cdn，异步上传处理后的图片到s3</p>
+<h2 id="注意点">注意点</h2>
+<p>(1) 处理后图片返回cdn，应该设置reponse Etag，使用http的缓存策略<br>
+(2) 异步上传到s3需要给资源打上tag，并且在aws管理后台设置tag的声明周期，防止资源占用，需要进行删除，只需要保留原图<br>
+(3) @200h_300w_20x20x100x100c.jpg 参数容易被恶意修改，导致s3产生大量资源内容，可以将改规则进行对称加密防止用户发现规则，或者给资源进行sign计算，虽然图片资源比例暴露，但是用户无法进行修改<br>
+(4) 资源过大的图片可以进行忽略，通过资源meta信息判断文件大小，超过指定大小跳过处理</p>
+<hr>
+<h1 id="00x3-优化空间">00x3 优化空间</h1>
+<p>(1) 大文件处理<br>
+(2) 图片处理速度</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Go日志转发服务设计]]></title>
+        <id>https://greatewei.github.io/post/go-ri-zhi-zhuan-fa-fu-wu-she-ji/</id>
+        <link href="https://greatewei.github.io/post/go-ri-zhi-zhuan-fa-fu-wu-she-ji/">
+        </link>
+        <updated>2021-01-06T09:13:40.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="服务描述">服务描述</h1>
+<p>日志转发服务主要是通过读取filebeat发送到redis的数据内容进行加工处理后，写入数据库的服务。</p>
+<h1 id="服务需求">服务需求</h1>
+<p>(1) 能够快速读取redis数据，快速写入指定数据库。<br>
+(2) 空闲时，不能够长时间占用cpu资源。<br>
+(3)  保证数据完整性。</p>
+<h1 id="服务设计">服务设计</h1>
+<h2 id="数据库">数据库</h2>
+<p>由于这个服务处理的只要是日志数据，写多读少，所以需要寻找一个写性能优秀的数据，本服务使用的是cassandra数据库，单机写入性能能达到3w TPS,  redis操作list的单机速度也差不多是5w TPS, 刚好适合，生产速度和消费速度接近。</p>
+<h2 id="逻辑设计">逻辑设计</h2>
+<p>由于redis读取的速度大于cs数据库写入速度，如果是边读编写，容易导致cs数据库处理不过来，所以我们可使用channel，将读取出来的数据放入channel，如果channel满了，生产者就阻塞住了，这样就可以控制生产速度，接下来需要开启多个work读取channel将数据写入cs数据库。<br>
+注意点：<br>
+(1) 读取redis采用批量读取，当数据为空的时候，需要改成阻塞获取。<br>
+(2) 写入cs采用批量写入。</p>
+<h2 id="开发过程遇到的坑">开发过程遇到的坑</h2>
+<p>(1) 由于go的协程非常优秀，于是做了一件蠢事，在读取channel一定数据后，开启一个协程进行写入，但是数据量实在太多了，导致产生了很多协程，内存占用很高，为了解决这个问题，又采用了go的协程池防止无限增长的协程数，但是当协程池满后，出现了阻塞，由于没有新的协程使用，导致channel数据消费不过来，之后选择启用多个work，每个work都轮询读取channel解决了以上问题。</p>
+<h1 id="服务性能">服务性能</h1>
+<p>2w TPS写入能力，cpu 内存使用情况正常。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Kafka磁盘扩容]]></title>
+        <id>https://greatewei.github.io/post/kafka-ci-pan-kuo-rong/</id>
+        <link href="https://greatewei.github.io/post/kafka-ci-pan-kuo-rong/">
+        </link>
+        <updated>2021-01-06T08:02:33.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="起因">起因</h1>
+<p>由于业务日志量不断变的庞大，当前2台kafka机器的磁盘占用过高，很快就不能正常使用，有两个解决方案。<br>
+(1) 添加机器<br>
+(2) 新增磁盘<br>
+由于考虑到目前使用的机器磁盘本身就比较小只有500G，于是我们选择了方案2，将磁盘扩容至1t，如果后期依旧不够使用，就需要考虑新增机器。</p>
+<h1 id="扩容步骤">扩容步骤</h1>
+<p>(1)  迁移zookeeper(如果zk和kafka不再同一机器，无需考虑)。<br>
+(2) 选择扩容kafka集群中非controller节点，将历史数据拷贝到新磁盘中(使用rsync进行同步，考虑到历史数据过大，应该先进行拷贝，最后停止kafka节点，进行增量数据拷贝)。<br>
+(3) 重新扩容后的节点需要等到数据的同步成功后（可使用kafka_drop观察），继续操作下一台机器节点。</p>
+<h2 id="zookeeper迁移步骤">zookeeper迁移步骤：</h2>
+<p>(1) 关闭zk， ps -ef|grep zk|awk '{print $2}'|xargs kill<br>
+(2) zk数据迁移到新磁盘(使用rsync进行同步)<br>
+(3) 重启zk<br>
+(4) 检查zookeeper是否正常,  ./zkServer.sh status</p>
+<h2 id="kafka迁移步骤">kafka迁移步骤：</h2>
+<p>(1) 进行数据拷贝到新磁盘 rsync -avPh /data/kafka /kafka_data/kafka。<br>
+(2) 关闭kafka 非controller 节点。<br>
+(3) 继续进行数据拷贝到新磁盘rsync -avPh /data/kafka /kafka_data/kafka  只需要copy kafka数据。<br>
+(4) 重启kafka节点（restart-server.sh）。<br>
+(5) 观察数据同步是否达到100%(可使用kafka_drop观察）。<br>
+(6) 继续下一台机器。</p>
+<h1 id="总结">总结</h1>
+<p>迁移过程还算顺利，客户端无感知迁移。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Prometheus监控告警系统]]></title>
+        <id>https://greatewei.github.io/post/prometheus-jian-kong-gao-jing-xi-tong/</id>
+        <link href="https://greatewei.github.io/post/prometheus-jian-kong-gao-jing-xi-tong/">
+        </link>
+        <updated>2020-10-12T08:18:46.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="什么是prometheus">什么是prometheus</h1>
+<p>Prometheus是由SoundCloud开发的开源监控报警系统和时序列数据库(TSDB)。Prometheus使用Go语言开发，是Google BorgMon监控系统的开源版本。<br>
+2016年由Google发起Linux基金会旗下的原生云基金会(Cloud Native Computing Foundation), 将Prometheus纳入其下第二大开源项目。<br>
+Prometheus目前在开源社区相当活跃。<br>
+Prometheus和Heapster(Heapster是K8S的一个子项目，用于获取集群的性能数据。)相比功能更完善、更全面。Prometheus性能也足够支撑上万台规模的集群。</p>
+<h1 id="prometheus的特点">prometheus的特点</h1>
+<p>多维度数据模型。<br>
+灵活的查询语言。<br>
+不依赖分布式存储，单个服务器节点是自主的。<br>
+通过基于HTTP的pull方式采集时序数据。<br>
+可以通过中间网关进行时序列数据推送。<br>
+通过服务发现或者静态配置来发现目标服务对象。<br>
+支持多种多样的图表和界面展示，比如Grafana等。</p>
+<h1 id="基本原理">基本原理</h1>
+<p>Prometheus的基本原理是通过HTTP协议周期性抓取被监控组件的状态，任意组件只要提供对应的HTTP接口就可以接入监控。不需要任何SDK或者其他的集成过程。这样做非常适合做虚拟化环境监控系统，比如VM、Docker、Kubernetes等。输出被监控组件信息的HTTP接口被叫做exporter 。目前互联网公司常用的组件大部分都有exporter可以直接使用，比如Varnish、Haproxy、Nginx、MySQL、Linux系统信息(包括磁盘、内存、CPU、网络等等)。</p>
+<h1 id="服务过程">服务过程</h1>
+<p>Prometheus Daemon负责定时去目标上抓取metrics(指标)数据，每个抓取目标需要暴露一个http服务的接口给它定时抓取。Prometheus支持通过配置文件、文本文件、Zookeeper、Consul、DNS SRV Lookup等方式指定抓取目标。Prometheus采用PULL的方式进行监控，即服务器可以直接通过目标PULL数据或者间接地通过中间网关来Push数据。<br>
+Prometheus在本地存储抓取的所有数据，并通过一定规则进行清理和整理数据，并把得到的结果存储到新的时间序列中。<br>
+Prometheus通过PromQL和其他API可视化地展示收集的数据。Prometheus支持很多方式的图表可视化，例如Grafana、自带的Promdash以及自身提供的模版引擎等等。Prometheus还提供HTTP API的查询方式，自定义所需要的输出。<br>
+PushGateway支持Client主动推送metrics到PushGateway，而Prometheus只是定时去Gateway上抓取数据。<br>
+Alertmanager是独立于Prometheus的一个组件，可以支持Prometheus的查询语句，提供十分灵活的报警方式。</p>
+<h1 id="docker-stack-配置服务">docker-stack 配置服务</h1>
+<pre><code>version: '3.7'
+
+volumes:
+    prometheus_data: {}
+    grafana_data: {}
+
+networks:
+  monitor-net:
+
+services:
+  webhook-dingding:
+    image: timonwong/prometheus-webhook-dingtalk
+    command: 
+      - '--web.enable-ui'
+      - '--config.file=/etc/prometheus-webhook-dingtalk/config.yml'
+    volumes:
+      - ./webhook/config.yml:/etc/prometheus-webhook-dingtalk/config.yml
+    ports:
+      - 8060:8060
+    networks:
+      - monitor-net
+    restart: always
+    deploy:
+      mode: global
+      restart_policy:
+          condition: any
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+    depends_on:
+      - cadvisor
+    networks:
+      - monitor-net
+    deploy:
+      placement:
+        constraints:
+          - node.role==manager
+      restart_policy:
+        condition: any
+
+  node-exporter:
+    image: prom/node-exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command: 
+      - '--path.procfs=/host/proc' 
+      - '--path.sysfs=/host/sys'
+      - --collector.filesystem.ignored-mount-points
+      - &quot;^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)&quot;
+    ports:
+      - 9100:9100
+    networks:
+      - monitor-net
+    deploy:
+      mode: global
+      restart_policy:
+          condition: any
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter
+    command: 
+      - '--kafka.server=172.31.0.117:9092'
+      - '--kafka.server=172.31.0.117:9093'
+    ports:
+      - 9308:9308
+    networks:
+      - monitor-net
+    restart: always
+    deploy:
+      mode: global
+      restart_policy:
+          condition: any
+
+  alertmanager:
+    image: prom/alertmanager
+    ports:
+      - 9093:9093
+    volumes:
+      - &quot;./alertmanager/:/etc/alertmanager/&quot;
+    networks:
+      - monitor-net
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    deploy:
+      placement:
+        constraints:
+           - node.role==manager
+      restart_policy:
+        condition: any  
+
+  cadvisor:
+    image: google/cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - 8080:8080
+    networks:
+      - monitor-net
+    deploy:
+      mode: global
+      restart_policy:
+          condition: any
+
+  grafana:
+    image: grafana/grafana
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./grafana/:/etc/grafana/
+    env_file:
+      - ./grafana/config.monitoring
+    networks:
+      - monitor-net
+    user: &quot;472&quot;
+    deploy:
+      placement:
+        constraints:
+          - node.role==manager
+      restart_policy:
+        condition: any
+</code></pre>
+<p>其中kafka_exporter与webhook-dingding 是可选服务，这里主要是用于kafka集群的监控与告警使用。启动命令： docker stack deploy prom --compose-file=docker-stack.yml</p>
+<h1 id="配置">配置</h1>
+<h2 id="prometheus-配置文件prometheusyml">prometheus 配置文件（prometheus.yml）</h2>
+<pre><code># my global config
+global:
+  scrape_interval:     15s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 15s # By default, scrape targets every 15 seconds.
+  # scrape_timeout is set to the global default (10s).
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+      monitor: '监控系统'
+
+# Load and evaluate rules in this file every 'evaluation_interval' seconds.
+rule_files:
+  - 'alert.rules'
+  # - &quot;first.rules&quot;
+  # - &quot;second.rules&quot;
+
+# alert
+alerting:
+  alertmanagers:
+  - scheme: http
+    static_configs:
+    - targets:
+      - &quot;alertmanager:9093&quot;
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=&lt;job_name&gt;` to any timeseries scraped from this config.
+
+  - job_name: 'prometheus'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+
+    static_configs:
+         - targets: ['172.31.0.144:9090']
+
+  - job_name: 'kafka-exporter'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+    static_configs:
+         - targets: ['172.31.0.144:9308']
+
+  - job_name: 'cadvisor'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+
+    dns_sd_configs:
+    - names:
+      - 'tasks.cadvisor'
+      type: 'A'
+      port: 8080
+
+#     static_configs:
+#          - targets: ['cadvisor:8080']
+
+  - job_name: 'node-exporter'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+    static_configs:
+         - targets: ['172.31.0.144:9100','172.31.0.136:9099','172.31.0.117:9099','172.31.0.118:9099']
+</code></pre>
+<p>这里主要配置一些exporter服务，主要用来提供数据，用于分析监控。</p>
+<h2 id="prometheus-配置文件alterrules">prometheus 配置文件（alter.rules）</h2>
+<pre><code>groups:
+- name: 服务告警
+  rules:
+
+  - alert: 服务异常关闭
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: prometheus
+    annotations:
+      summary: &quot;prometheus实例关闭&quot;
+      description: &quot;{{ $labels.instance }} of job {{ $labels.job }} 已经关闭了!!!!&quot;
+
+  - alert: 消息积压
+    expr: kafka_consumergroup_lag &gt; 30
+    for: 1m
+    labels:
+      severity: kafka
+    annotations:
+      summary: &quot;kafka消息积压&quot;
+      description: &quot;kafka 消费组 {{ $labels.consumergroup }} \n\r topic: {{ $labels.topic }} \n\r 消息积压数: {{ $value }}&quot;
+
+  - alert: CPU告警
+    expr: (1 - avg(irate(node_cpu_seconds_total{mode=&quot;idle&quot;}[5m])) by (instance)) * 100 &gt; 90
+    for: 1m
+    labels:
+      team: node
+    annotations:
+      summary: &quot;CPU告警&quot;
+      description: &quot;机器(ip = {{$labels.instance}}) \n\r CPU使用量超过90%，目前剩余量为：{{ $value }}&quot;
+
+  - alert: 磁盘告警
+    expr: 100.0 - 100 * ((node_filesystem_avail_bytes{mountpoint=~&quot;/&quot;, device!=&quot;rootfs&quot;} / 1000 / 1000 ) / (node_filesystem_size_bytes{mountpoint=~&quot;/&quot;, device!=&quot;rootfs&quot;} / 1024 / 1024)) &gt; 85
+    for: 1m
+    labels:
+      team: node
+    annotations:
+      summary: &quot;磁盘告警&quot;
+      description: &quot;机器(ip = {{$labels.instance}}) \n\r 磁盘使用量超过85%，目前剩余量为：{{ $value }}G &quot;
+
+  - alert: 内存告警
+    expr: (node_memory_MemTotal_bytes - (node_memory_MemFree_bytes+node_memory_Buffers_bytes+node_memory_Cached_bytes)) / node_memory_MemTotal_bytes * 100 &gt; 90
+    for: 1m
+    labels:
+      team: node
+    annotations:
+      summary: &quot;内存告警&quot;
+      description: &quot;机器(ip = {{$labels.instance}}) \n\r 内存使用量超过90%，目前剩余量为：{{ $value }}M &quot;
+
+</code></pre>
+<p>以上是自定义的各种告警指标。</p>
+<h2 id="alertmanager配置文件configyml">alertmanager配置文件(config.yml)</h2>
+<pre><code> route:
+     receiver: 'web.hook'
+ receivers:
+  - name: 'web.hook'
+    webhook_configs:
+      - url: http://172.31.0.144:8060/dingtalk/webhook1/send
+</code></pre>
+<p>这里将会将告警信息发送到指定告警api，可自定义webhook服务，处理告警消息内容。</p>
+<h1 id="效果图">效果图</h1>
+<figure data-type="image" tabindex="1"><img src="https://greatewei.github.io/post-images/1603338375571.jpg" alt="" loading="lazy"></figure>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[MQTT协议 简介]]></title>
+        <id>https://greatewei.github.io/post/mqtt-xie-yi-xiang-jie/</id>
+        <link href="https://greatewei.github.io/post/mqtt-xie-yi-xiang-jie/">
+        </link>
+        <updated>2020-05-25T08:18:07.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="mqtt是什么">MQTT是什么？</h1>
+<p>MQTT（Message Queuing Telemetry Transport，消息队列遥测传输协议），是一种基于发布/订阅（Publish/Subscribe）模式的轻量级通讯协议，该协议构建于TCP/IP协议上，由IBM在1999年发布，目前最新版本为v3.1.1。MQTT最大的优点在于可以以极少的代码和有限的带宽，为远程设备提供实时可靠的消息服务。做为一种低开销、低带宽占用的即时通讯协议，MQTT在物联网、小型设备、移动应用等方面有广泛的应用。</p>
+<p>当然，在物联网开发中，MQTT不是唯一的选择，与MQTT互相竞争的协议有XMPP和CoAP协议等，文章末尾会有一个比较和说明。</p>
+<h1 id="mqtt是哪一层协议">MQTT是哪一层协议？</h1>
+<p>众所周知，TCP/IP参考模型可以分为四层：应用层、传输层、网络层、链路层。TCP和UDP位于传输层，应用层常见的协议有HTTP、FTP、SSH等。MQTT协议运行于TCP之上，属于应用层协议，因此只要是支持TCP/IP协议栈的地方，都可以使用MQTT。</p>
+<h1 id="mqtt消息格式">MQTT消息格式</h1>
+<p>每条MQTT命令消息的消息头都包含一个固定的报头，有些消息会携带一个可变报文头和一个负荷。消息格式如下：</p>
+<p>固定报文头 | 可变报文头 | 负荷</p>
+<h2 id="固定报文头fixed-header">固定报文头（Fixed Header）</h2>
+<p>MQTT固定报文头最少有两个字节，第一字节包含消息类型（Message Type）和QoS级别等标志位。第二字节开始是剩余长度字段，该长度是后面的可变报文头加消息负载的总长度，该字段最多允许四个字节。</p>
+<p>剩余长度字段单个字节最大值为二进制0b0111 1111，16进制0x7F。也就是说，单个字节可以描述的最大长度是127字节。为什么不是256字节呢？因为MQTT协议规定，单个字节第八位（最高位）若为1，则表示后续还有字节存在，第八位起“延续位”的作用。</p>
+<p>例如，数字64，编码为一个字节，十进制表示为64，十六进制表示为0×40。数字321（65+2*128）编码为两个字节，重要性最低的放在前面，第一个字节为65+128=193（0xC1），第二个字节是2（0x02），表示2×128。</p>
+<p>由于MQTT协议最多只允许使用四个字节表示剩余长度（如表1），并且最后一字节最大值只能是0x7F不能是0xFF，所以能发送的最大消息长度是256MB，而不是512MB。</p>
+<h2 id="可变报文头variable-header">可变报文头（Variable Header）</h2>
+<p>可变报文头主要包含协议名、协议版本、连接标志（Connect Flags）、心跳间隔时间（Keep Alive timer）、连接返回码（Connect Return Code）、主题名（Topic Name）等，后面会针对主要部分进行讲解。</p>
+<h2 id="有效负荷payload">有效负荷（Payload）</h2>
+<p>Payload直译为负荷，可能让人摸不着头脑，实际上可以理解为消息主体（body）。</p>
+<p>当MQTT发送的消息类型是CONNECT（连接）、PUBLISH（发布）、SUBSCRIBE（订阅）、SUBACK（订阅确认）、UNSUBSCRIBE（取消订阅）时，则会带有负荷。</p>
+<h1 id="mqtt的主要特性">MQTT的主要特性</h1>
+<p>固定报文头中的第一个字节包含连接标志（Connect Flags），连接标志用来区分MQTT的消息类型。MQTT协议拥有14种不同的消息类型（如表2），可简单分为连接及终止、发布和订阅、QoS 2消息的机制以及各种确认ACK。至于每一个消息类型会携带什么内容，这里不多阐述。<br>
+<img src="https://img-blog.csdn.net/20170725100930389" alt="" loading="lazy"></p>
+<h1 id="消息质量qos">消息质量（Qos）</h1>
+<p>MQTT消息质量有三个等级，QoS 0，QoS 1和 QoS 2。</p>
+<p>QoS 0：最多分发一次。消息的传递完全依赖底层的TCP/IP网络，协议里没有定义应答和重试，消息要么只会到达服务端一次，要么根本没有到达。<br>
+QoS 1：至少分发一次。服务器的消息接收由PUBACK消息进行确认，如果通信链路或发送设备异常，或者指定时间内没有收到确认消息，发送端会重发这条在消息头中设置了DUP位的消息。<br>
+QoS 2：只分发一次。这是最高级别的消息传递，消息丢失和重复都是不可接受的，使用这个服务质量等级会有额外的开销。 <br>
+通过下面的例子可以更深刻的理解上面三个传输质量等级。<br>
+比如目前流行的共享单车智能锁，智能锁可以定时使用QoS level 0质量消息请求服务器，发送单车的当前位置，如果服务器没收到也没关系，反正过一段时间又会再发送一次。之后用户可以通过App查询周围单车位置，找到单车后需要进行解锁，这时候可以使用QoS level 1质量消息，手机App不断的发送解锁消息给单车锁，确保有一次消息能达到以解锁单车。最后用户用完单车后，需要提交付款表单，可以使用QoS level 2质量消息，这样确保只传递一次数据，否则用户就会多付钱了。</p>
+<h1 id="遗愿标志-will-flag">遗愿标志 （Will Flag）</h1>
+<p>在可变报文头的连接标志位字段（Connect Flags）里有三个Will标志位：Will Flag、Will QoS和Will Retain Flag，这些Will字段用于监控客户端与服务器之间的连接状况。如果设置了Will Flag，就必须设置Will QoS和Will Retain标志位，消息主体中也必须有Will Topic和Will Message字段。</p>
+<p>那遗愿消息是怎么回事呢？服务器与客户端通信时，当遇到异常或客户端心跳超时的情况，MQTT服务器会替客户端发布一个Will消息。当然如果服务器收到来自客户端的DISCONNECT消息，则不会触发Will消息的发送。 <br>
+因此，Will字段可以应用于设备掉线后需要通知用户的场景。</p>
+<h1 id="连接保活心跳机制keep-alive-timer">连接保活心跳机制（Keep Alive Timer）</h1>
+<p>MQTT客户端可以设置一个心跳间隔时间（Keep Alive Timer），表示在每个心跳间隔时间内发送一条消息。如果在这个时间周期内，没有业务数据相关的消息，客户端会发一个PINGREQ消息，相应的，服务器会返回一个PINGRESP消息进行确认。如果服务器在一个半（1.5）心跳间隔时间周期内没有收到来自客户端的消息，就会断开与客户端的连接。心跳间隔时间最大值大约可以设置为18个小时，0值意味着客户端不断开。</p>
+<h1 id="mqtt其他特点">MQTT其他特点</h1>
+<h2 id="异步发布-订阅实现">异步发布、订阅实现</h2>
+<p>发布/订阅模式解耦了发布消息的客户（发布者）与订阅消息的客户（订阅者）之间的关系，这意味着发布者和订阅者之间并不需要直接建立联系。<br>
+这个模式有以下好处：</p>
+<p>发布者与订阅者只需要知道同一个消息代理即可；<br>
+发布者和订阅者不需要直接交互；<br>
+发布者和订阅者不需要同时在线。<br>
+由于采用了发布/订阅实现，MQTT可以双向通信。也就是说MQTT支持服务端反向控制设备，设备可以订阅某个主题，然后发布者对该主题发布消息，设备收到消息后即可进行一系列操作。</p>
+<h2 id="二进制格式实现">二进制格式实现</h2>
+<p>MQTT基于二进制实现而不是字符串，比如HTTP和XMPP都是基于字符串实现。由于HTTP和XMPP拥有冗长的协议头部，而MQTT固定报文头仅有两字节，所以相比其他协议，发送一条消息最省流量。</p>
+<h2 id="mqtt的安全">MQTT的安全</h2>
+<p>由于MQTT运行于TCP层之上并以明文方式传输，这就相当于HTTP的明文传输，使用Wireshark可以完全看到MQTT发送的所有消息，消息指令一览无遗<br>
+!()[https://img-blog.csdn.net/20170725101215295]</p>
+<p>这样可能会产生以下风险：</p>
+<p>设备可能会被盗用；<br>
+客户端和服务端的静态数据可能是可访问的（可能会被修改）；<br>
+协议行为可能有副作用（如计时器攻击）；<br>
+拒绝服务攻击；<br>
+通信可能会被拦截、修改、重定向或者泄露；<br>
+虚假控制报文注入。<br>
+作为传输协议，MQTT仅关注消息传输，提供合适的安全功能是开发者的责任。安全功能可以从三个层次来考虑——应用层、传输层、网络层。</p>
+<p>应用层：在应用层上，MQTT提供了客户标识（Client Identifier）以及用户名和密码，可以在应用层验证设备。<br>
+传输层：类似于HTTPS，MQTT基于TCP连接，也可以加上一层TLS，传输层使用TLS加密是确保安全的一个好手段，可以防止中间人攻击。客户端证书不但可以作为设备的身份凭证，还可以用来验证设备。<br>
+网络层：如果有条件的话，可以通过拉专线或者使用VPN来连接设备与MQTT代理，以提高网络传输的安全性。</p>
+<h1 id="总结">总结</h1>
+<p>MQTT基于异步发布/订阅的实现解耦了消息发布者和订阅者，基于二进制的实现节省了存储空间及流量，同时MQTT拥有更好的消息处理机制，可以替代TCP Socket一部分应用场景。相对于HTTP和XMPP，MQTT可以选择用户数据格式，解析复杂度低，同时MQTT也可用于手机推送等领域。手机作为与人连接的入口，正好建立了人与物的连接，可谓一箭双雕。当然，其他协议也可以作为一个辅助的存在，HTTP可以为只需定时上传数据的设备服务，CoAP则更适用于非常受限的移动通信网络。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[美图长连接平台 简介]]></title>
+        <id>https://greatewei.github.io/post/mei-tu-chang-lian-jie-ping-tai/</id>
+        <link href="https://greatewei.github.io/post/mei-tu-chang-lian-jie-ping-tai/">
+        </link>
+        <updated>2020-05-25T07:03:31.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="美图长连接服务">美图长连接服务</h1>
+<p>随着科技的飞速发展，技术的日新月异，长连接的运用场景日益增多。不仅在后端服务中被广泛运用，比较常见的有数据库的访问、服务内部状态的协调等，而且在 App  端的消息推送、聊天信息、直播弹字幕等场景长连接服务也是优选方案。长连接服务的重要性也在各个场合被业界专家不断提及，与此同时也引起了更为广泛地关注和讨论，各大公司也开始构建自己的长连接服务。</p>
+<p>美图公司于2016 年初开始构建长连接服务，与此同时， Go 在编程语言领域异军突起，考虑到其丰富的编程库，完善的工具链，简单高效的并发模型等优势，使我们最终选择 Go 去作为实现长连接服务的语言。在通信协议的选择上，考虑到 MQTT 协议的轻量、简单、易于实现的优点，选择了 MQTT 协议作为数据交互的载体。其整体的架构会在下文中做相应地介绍。</p>
+<p>美图长连接服务（项目内部代号为bifrost ）已经历时三年，在这三年的时间里，长连接服务经过了业务的检验，同时也经历了服务的重构，存储的升级等，长连接服务从之前支持单机二十几万连接到目前可以支撑单机百万连接。在大多数长连接服务中存在一个共性问题，那就是内存占用过高，我们经常发现单个节点几十万的长连接，内存却占用十几G 甚至更多，有哪些手段能降低内存呢？</p>
+<p>本文将从多个角度介绍长连接服务在内存优化路上的探索，首先会先通过介绍当前服务的架构模型，Go 语言的内存管理，让大家清晰地了解我们内存优化的方向和关注的重要数据。后面会重点介绍我们在内存优化上做的一些尝试以及具体的优化手段，希望对大家有一定的借鉴意义。</p>
+<h1 id="架构模型">架构模型</h1>
+<p><img src="https://mlog.club/api/img/proxy?url=https%3A%2F%2Fmmbiz.qpic.cn%2Fmmbiz_png%2F8XkvNnTiapON5Uia1wzpCd7y4KId7K77ElzicUjqlKZPG0TcpdY0pvwQMcWwT7ok24ALKYwibKJz7ekkuOib7a6ibxSw%2F640%3Fwx_fmt%3Dpng" alt="" loading="lazy"><br>
+从架构图中我们可以清晰地看到由7 个模块组成，分别是：conf 、grpcsrv 、mqttsrv、session、pubsub、packet、util ，每个模块的作用如下：</p>
+<p>conf ：配置管理中心，负责服务配置的初始化，基本字段校验。</p>
+<p>grpcsrv ：grpc 服务，集群内部信息交互协调。</p>
+<p>mqttsrv ：mqtt 服务，接收客户端连接，同时支持单进程多端口 MQTT 服务。</p>
+<p>session ：会话模块，管理客户端状态变化，MQTT 信息的收发。</p>
+<p>pubsub ：发布订阅模块，按照 Topic 维度保存 session 并发布 Topic 通知给 session。</p>
+<p>packet：协议解析模块，负责 MQTT 协议包解析。</p>
+<p>util ：工具包，目前集成监控、日志、grpc 客户端、调度上报四个子模块。</p>
+<h1 id="go的内存管理">Go的内存管理</h1>
+<p>...</p>
+<h1 id="业务优化">业务优化</h1>
+<p>session模块主要用户处理消息的收发，在实现时考虑到在通常场景中业务的消息生产大于客户端的消费速度的情况，为了缓解这种状况，设计时引入消息的缓冲队列，这种做法同样也有助于做客户端消息的流控。</p>
+<p>缓冲消息队列借助chan 实现 ，chan 大小根据经验将初始化默认配置为 128 。但在目前线上推送的场景中，我们发现，消息的生产一般小于消费的速度，128 缓冲大小明显偏大，因此我们把长度调整为 16 ，减少内存的分配。</p>
+<p>在设计中按照topic 对客户端进行分组管理的算法中，采用空间换时间的方式，组合 map 和 list 两种数据结构对于客户端集合操作提供O（1）的删除、O（1）的添加、O（n）的遍历。数据的删除采用标记删除方式，使用辅助 slice 结构进行记录，只有到达预设阈值才会进行真正的删除。虽然标记删除提高了遍历和添加的性能，但也同样带来了内存损耗问题。</p>
+<p>大家一定好奇什么样的场景需要提供这样的复杂度，在实际中其场景有以下两种情况：</p>
+<p>在实际的网络场景中，客户端随时都可能由于网络的不稳定断开或者重新建联，因此集合的增加和删除需要在常数范围内。</p>
+<p>在消息发布的流程中，采用遍历集合逐一发布通知方式，但随着单个topic 上的用户量的增加，经常会出现单个 topic 用户集合消息过热的问题，耗时太久导致消息挤压，因此针对集合的遍历当然也要求尽量快。</p>
+<p>通过benchamrk 数据分析，在标记回收 slice 长度在 1000 时，可以提供最佳的性能，因此默认配置阈值为 1000。在线上服务中，无特殊情况都是采用默认配置。但在当前推送服务的使用中，发现标记删除和延迟回收机制好处甚微，主要是因为 topic 和客户端为 1 : 1 方式，也就是不存在客户端集合，因此调整回收阈值大小为 2，减少无效内存占用。</p>
+<p>上述所有优化，只要简单调整配置后服务灰度上线即可，在设计实现时通过conf 模块动态配置，降低了服务的开发和维护成本。通过监控对比优化效果如下表，在优化后在线连接数比优化的在线连接更多的情况下， heap 使用内存使用数量由原来的 4.16G 下降到了 3.5G ，降低了约 0.66 G。<br>
+<img src="https://mlog.club/api/img/proxy?url=https%3A%2F%2Fmmbiz.qpic.cn%2Fmmbiz_png%2F8XkvNnTiapON5Uia1wzpCd7y4KId7K77ElfUasn5axY8xkhabmqwefAa8onSBfkVGHNHJc9DbBo26n0zxibFCk7LA%2F640%3Fwx_fmt%3Dpng" alt="" loading="lazy"></p>
+<h1 id="golang-代码优化">golang 代码优化</h1>
+<p>在实现上面展示的架构的时候发现在session 模块 和 mqttsrv 模块之间存在很多共享变量，目前实现方式都是采用指针或者值拷贝的，由于 session的数量和客户端数据量成正比也就导致消耗大量内存用于共享数据，这不仅仅增加 GC 压力，同样对于内存的消耗也是巨大的。就此问题思考再三，参考系统的库 context 的设计在架构中也抽象 context 包负责模块之间交互信息传递，统一分配内存。此外还参考他人减少临时变量的分配的优化方式，提高系统运行效率。主要优化角度参考如下：</p>
+<p>在频繁申请内存的地方，使用pool 方式进行内存管理</p>
+<p>小对象合并成结构体一次分配，减少内存分配次数</p>
+<p>缓存区内容一次分配足够大小空间，并适当复用</p>
+<p>slice 和 map 采 make 创建时，预估大小指定容量</p>
+<p>调用栈避免申请较多的临时对象</p>
+<p>减少[]byte 与 string 之间转换，尽量采用 []byte 来字符串处理</p>
+<p>目前系统具被完备的单元测试、集成测试，因此经过一周的快速的开发重构后灰度上线监控数据对比如下表：在基本相同的连接数上，heap 使用内存约占用降低 0.27G，stack 申请内存占用降低 3.81G。为什么 stack 会大幅度降低呢？</p>
+<p>通过设置stackDebug 重新编译程序追查程序运行过程，优化前 goroutine 栈的大多数在内存为 16K，通过减少临时变量的分配，拆分大函数处理逻辑，有效的减少触发栈的内存扩容（详细分析见参考文章），优化后 goroutine 栈内存降低到 8 K。一个连接需要启动两个 goroutine 负责数据的读和写，粗略计算一个连接减少约 16 K 的内存，23 w 连接约降低 3.68 G 内存。<br>
+<img src="https://mlog.club/api/img/proxy?url=https%3A%2F%2Fmmbiz.qpic.cn%2Fmmbiz_png%2F8XkvNnTiapON5Uia1wzpCd7y4KId7K77ElCJia4XkicRiclW1ChszUFWUu2Lzf8LrMUuDb6iajILtLuMD6JfS5wzUiaNA%2F640%3Fwx_fmt%3Dpng" alt="" loading="lazy"></p>
+<h1 id="网络模型优化">网络模型优化</h1>
+<p>在Go 语言的网络编程中经典的实现都是采用同步处理方式，启动两个 goroutine 分别处理读和写请求，goroutine 也不像 thread ，它是轻量级的。但对于一百万连接的情况，这种设计模式至少要启动两百万的 goroutine，其中一个 goroutine 使用栈的大小在 2 KB 到 8KB， 对于资源的消耗也是极大的。在大多数场景中，只有少数连接是有数据处理，大部分 goroutine 阻塞 IO 处理中。在因此可以借鉴 C 语言的设计，在程序中使用 epoll 模型做事件分发，只有活跃连接才会启动 goroutine 处理业务，基于这种思想修改网络处理流程。</p>
+<p>网络模型修改测试完成后开始灰度上线，通过监控数据对比如下表：在优化后比优化前的连接数多10 K的情况下，heap 使用内存降低 0.33 G，stack 申请内存降低 2.34 G，优化效果显著。</p>
+<figure data-type="image" tabindex="1"><img src="https://mlog.club/api/img/proxy?url=https%3A%2F%2Fmmbiz.qpic.cn%2Fmmbiz_png%2F8XkvNnTiapON5Uia1wzpCd7y4KId7K77ElIzPXia18GePGJpqGOH21piaHDYhvb9vYPwiaSrW9MQCvdkxAKL0UvC7fQ%2F640%3Fwx_fmt%3Dpng" alt="" loading="lazy"></figure>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[长连接平台架构]]></title>
+        <id>https://greatewei.github.io/post/go-shi-xian-im/</id>
+        <link href="https://greatewei.github.io/post/go-shi-xian-im/">
+        </link>
+        <updated>2020-05-25T02:39:25.000Z</updated>
+        <content type="html"><![CDATA[<!-- more -->
+<h1 id="go实现im">Go实现IM</h1>
+<p>长连接平台：<br>
+分为四个部分，rev,sender,registor,online（接受者，发送者，注册中心，在线列表）<br>
+im：负责处理业务逻辑<br>
+<img src="http://blog.hytech.com/wp-content/uploads/2020/05/2AB94DDF-906C-430E-ACA5-B26B42DFDA1B.jpg" alt="" loading="lazy"></p>
+<h2 id="rev负责数据的接收发送">rev负责数据的接收发送</h2>
+<h3 id="架构设计">架构设计</h3>
+<p>主进程负责接收消息（epoll）将消息放入阻塞队列，主进程开启多个消费者（work协程）读取阻塞队列消息处理，向用户中心获取产品注册的队列（队列1，队列2），将处理后的消息发送到对应队列（消费队列，异常队列）。</p>
+<h2 id="im负责消息业务处理">im负责消息业务处理</h2>
+<h3 id="功能">功能</h3>
+<p>将消息从队列（队列1，队列2）获取后进行业务处理，将需要返回的消息内容发送到接收队列（sender接收队列）。</p>
+<h2 id="sender负责数据转发">sender负责数据转发</h2>
+<h3 id="架构设计-2">架构设计</h3>
+<p>主进程开启多个（消费者work协程）消费task（任务消息），消息内容包含要发送的目的rev信息，调用rpc方法将消息发送到指定rev，开启多个（生产者work协程）订阅接收队列（sender接收队列）中将消息封装成task供（消费者work协程）进行消费。</p>
+<h2 id="registor负责注册各种服务">registor负责注册各种服务</h2>
+<h3 id="功能-2">功能</h3>
+<p>注册中心负责记录长连平台各个服务的信息，以便各个服务相互之间能找到对方。<br>
+各个服务的注册信息存放在redis中。<br>
+各个服务使用redis的发布订阅模式获取注册中心的所有信息 。</p>
+<h2 id="online-在线列表">online 在线列表</h2>
+<h3 id="功能-3">功能</h3>
+<p>online模块负责记录成功登陆长连平台的用户信息。主要是用户是再哪个recv登陆的。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Swoole实现IM]]></title>
+        <id>https://greatewei.github.io/post/swoole-shi-xian-im/</id>
+        <link href="https://greatewei.github.io/post/swoole-shi-xian-im/">
+        </link>
+        <updated>2020-05-22T06:24:10.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="0x01">0X01</h1>
+<h2 id="swoole_table-共享内存表">swoole_table 共享内存表</h2>
+<p>在swoole_server-&gt;start()之前创建swoole_table对象。并存入全局变量或者类静态变量/对象属性中。<br>
+在worker/task进程中获取table对象，并使用</p>
+<p>注意点：只有在swoole_server-&gt;start()之前创建的table对象才能在子进程中使用<br>
+swoole_table构造方法中指定了最大容量，一旦超过此数据容量将无法分配内存导致set操作失败。所以使用swoole_table之前一定要规划好数据容量，实现进程之间的数据共享。</p>
+<pre><code>$table = new swoole_table(1024);
+$table-&gt;column('fd', swoole_table::TYPE_INT);
+$table-&gt;column('from_id', swoole_table::TYPE_INT);
+$table-&gt;column('data', swoole_table::TYPE_STRING, 64);
+$table-&gt;create();
+
+$serv = new swoole_server('127.0.0.1', 9501);
+//将table保存在serv对象上
+$serv-&gt;table = $table;
+
+$serv-&gt;on('receive', function ($serv, $fd, $from_id, $data) {
+    $ret = $serv-&gt;table-&gt;set($fd, array('from_id' =&gt; $data, 'fd' =&gt; $fd, 'data' =&gt; $data));
+});
+
+$serv-&gt;start();
+</code></pre>
+<h1 id="0x02">0X02</h1>
+<h2 id="swoole_websocket_server">swoole_websocket_server</h2>
+<p>WebSocket服务器是建立在Http服务器之上的长连接服务器，客户端首先会发送一个Http的请求与服务器进行握手。握手成功后会触发onOpen事件，表示连接已就绪，onOpen函数中可以得到$request对象，包含了Http握手的相关信息，如GET参数、Cookie、Http头信息等。</p>
+<p>建立连接后客户端与服务器端就可以双向通信了。</p>
+<pre><code>//创建websocket服务器对象，监听0.0.0.0:9502端口
+$ws = new swoole_websocket_server(&quot;0.0.0.0&quot;, 9502);
+
+//监听WebSocket连接打开事件
+$ws-&gt;on('open', function ($ws, $request) {
+    var_dump($request-&gt;fd, $request-&gt;get, $request-&gt;server);
+    $ws-&gt;push($request-&gt;fd, &quot;hello, welcome\n&quot;);
+});
+
+//监听WebSocket消息事件
+$ws-&gt;on('message', function ($ws, $frame) {
+    echo &quot;Message: {$frame-&gt;data}\n&quot;;
+    $ws-&gt;push($frame-&gt;fd, &quot;server: {$frame-&gt;data}&quot;);
+});
+
+//监听WebSocket连接关闭事件
+$ws-&gt;on('close', function ($ws, $fd) {
+    echo &quot;client-{$fd} is closed\n&quot;;
+});
+
+$ws-&gt;start();
+</code></pre>
+<h1 id="0x02-2">0X02</h1>
+<h2 id="swoole_process">swoole_process</h2>
+<p>swoole增加了多进程管理模块来替代PHP的pcntl，它相比pcntl的不同点是：</p>
+<p>swoole_process提供了pcntl没有的进程间通信<br>
+swoole_process支持重定向标准输入和输出，在子进程内echo或者读键盘输入可以被重定向为从管道中取数据<br>
+子进程可以异步化</p>
+<pre><code>$worker_num = 8;
+
+for($i = 0; $i &lt; $worker_num; $i++)
+{
+    $process = new swoole_process('callback_function', $redirect_stdout);
+    $pid = $process-&gt;start();
+    $workers[$pid] = $process;
+}
+
+function callback_function(swoole_process $worker)
+{
+    //echo &quot;Worker: start. PID=&quot;.$worker-&gt;pid.&quot;\n&quot;;
+    //recv data from master
+    $recv = $worker-&gt;read();
+    echo &quot;From Master: $recv\n&quot;;
+
+    //send data to master
+    $worker-&gt;write(&quot;hello master\n&quot;);
+
+    sleep(2);
+    $worker-&gt;exit(0);
+}
+// read/write 2个方法就是向管道内读写数据。主进程内可以通过write/read 向子进程写入，读取数据。
+
+// swoole_process支持了标准输入输出的重定向，子进程内echo时，会自动写入管道，而不是打印到屏幕。
+
+// 子进程异步
+function callback_function_async(swoole_process $worker)
+{
+    //echo &quot;Worker: start. PID=&quot;.$worker-&gt;pid.&quot;\n&quot;;
+    //recv data from master
+    $GLOBALS['worker'] = $worker;
+    swoole_event_add($worker-&gt;pipe, function($pipe) {
+        $worker = $GLOBALS['worker'];
+        $recv = $worker-&gt;read();
+
+        echo &quot;From Master: $recv\n&quot;;
+
+        //send data to master
+        $worker-&gt;write(&quot;hello master\n&quot;);
+
+        sleep(2);
+
+        $worker-&gt;exit(0);
+    });
+}
+
+//可以将管道加入到swoole_event中即可实现异步的进程间通信，另外子进程内可以使用swoole_timer/swoole_client/swoole_async这些异步的API。或者使用swoole_event_add直接操作swoole的EventLoop。
+</code></pre>
+<h1 id="0x03-实现im">0X03 实现IM</h1>
+<h2 id="创建一个swoole_table共享内存表用于记录连接的客户端信息">创建一个swoole_table共享内存表，用于记录连接的客户端信息</h2>
+<p>记录：<br>
+用户id, 设备id, 设备型号， 登录状态，数据接收池，客户端ip，客户端端口，上一次在线时间。</p>
+<h2 id="创建一个websocket_service">创建一个websocket_service</h2>
+<p>启动之前编写一个协议类IM，负责处理业务逻辑。</p>
+<p>swoole_process 创建一个进程专门用于处理定时器，websocket_service.addprocess()<br>
+加载配置文件<br>
+回调函数内需要编写的内容</p>
+<h3 id="connect">connect：</h3>
+<p>客户端连接时触发，将用户信息记录到swoole_table中，并且调用IM协议类中的方法，创建一个定时器，等待用户进行登录操作，swoole_timer_after 指定时间后自动关闭当前用户连接（主动关闭用户连接会触发回调函数close），如果用户在指定时间内登录，清除定时器。</p>
+<h3 id="handshake">handShake：</h3>
+<p>服务端握手时触发，有需要可以自己进行处理（可选项）。</p>
+<h3 id="message">message：</h3>
+<p>服务端接收到数据时触发，判断当前接收到是的数据是否完整（数据传输过程发生了拆包，swoole_frame-&gt;finish判断是否完整），如果数据不完整将数据存储到内存表中的当前用户的数据接收池，请求结束。否则将当前用户数据接收池数据获取出来与当前数据进行组和，情况数据接收池，获得到完整数据进行业务逻辑处理。调用IM协议类的方法进行相应处理。</p>
+<h3 id="close">close</h3>
+<p>主动断开客户端连接时触发，清除swoole_table用户相关数据。</p>
+<h3 id="start">start</h3>
+<p>websocket服务启动触发，有需要可以自行修改</p>
+<h3 id="managerstart">managerStart</h3>
+<p>manager进程启动时触发，有需要可以自行修改</p>
+<h3 id="workerstart">workerStart</h3>
+<p>worker进程启动时触发</p>
+<h3 id="shutdown">shutdown</h3>
+<p>服务关闭时触发，清除远端用户在线列表信息（redis）。</p>
+<h3 id="workererror">workerError</h3>
+<p>work异常触发，释放work资源，调用使用类的析构函数。</p>
+<h3 id="workerstop">workerStop</h3>
+<p>work停止触发，释放work资源，调用使用类的析构函数。</p>
+<h3 id="task">task</h3>
+<p>task启动时触发</p>
+<h2 id="im协议类">IM协议类</h2>
+<h3 id="接收消息">接收消息</h3>
+<p>解析接收的消息，判断当前消息是否正常，检查内存表中用户是否存在信息。<br>
+每次接收到消息重置心跳定时器。<br>
+检查用户是否有在线信息，如果有更新在线时间。<br>
+客户端需要定时发送ping包</p>
+<h3 id="用户登录">用户登录</h3>
+<p>用户登录后清除登录定时器，更新本地在线信息，远端在线信息。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Swoole架构]]></title>
+        <id>https://greatewei.github.io/post/swoolemasterreactormanagerworkertaskworkertask/</id>
+        <link href="https://greatewei.github.io/post/swoolemasterreactormanagerworkertaskworkertask/">
+        </link>
+        <updated>2020-05-22T05:46:16.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="swoolemasterreactormanagerworkertaskworkertask">Swoole：Master/Reactor/Manager/Worker/TaskWorker(Task)</h1>
+<figure data-type="image" tabindex="1"><img src="https://ss1.baidu.com/6ONXsjip0QIZ8tyhnq/it/u=4118852065,2174358700&amp;fm=173&amp;app=49&amp;f=JPEG?w=640&amp;h=329&amp;s=78E1B544CFBA0409589B83650300F053" alt="" loading="lazy"></figure>
+<h2 id="master进程">Master进程</h2>
+<p>master进程为主进程,该进程会创建Manager进程和Reactor线程等工作进/线程<br>
+swoole的主进程,是个多线程的程序.</p>
+<h3 id="主进程内的回调函数">主进程内的回调函数：</h3>
+<p>onStart<br>
+onShutdown<br>
+onMasterConnect<br>
+onMasterClose<br>
+onTimer<br>
+...</p>
+<h2 id="reactor线程">Reactor线程</h2>
+<p>Reactor线程是真正处理TCP连接，收发数据的线程。<br>
+Swoole的主线程在Accept新的连接后，会将这个连接分配给一个固定的Reactor线程，并由这个线程负责监听此socket。在socket可读时读取数据，并进行协议解析，将请求投递到Worker进程。在socket可写时将数据发送给TCP客户端.</p>
+<h2 id="manager进程">Manager进程</h2>
+<p>Manager进程是管理进程,该进程是为了创建管理所有的woker进程和TaskWorker进程,swoole中worker/task进程都是由Manager进程Fork并管理的。(master主进程为多线程进程,不能安全的执行fork操作)</p>
+<p>子进程结束运行时，manager进程负责回收此子进程，避免成为僵尸进程。并创建新的子进程<br>
+服务器关闭时，manager进程将发送信号给所有子进程，通知子进程关闭服务<br>
+服务器reload时，manager进程会逐个关闭/重启子进程</p>
+<h3 id="管理进程内的回调函数">管理进程内的回调函数</h3>
+<p>onManagerStart<br>
+onManagerStop</p>
+<h2 id="worker进程">Worker进程</h2>
+<p>worker进程是工作进程,所有的业务逻辑都在该进程中进行,当Reactor线程接收到来自客户端的数据后，会将数据打包通过管道发送给某个Worker进程.</p>
+<p>Swoole提供了完善的进程管理机制，当Worker进程异常退出，如发生PHP的致命错误、被其他程序误杀，或达到max_request次数之后正常退出。主进程会重新拉起新的Worker进程。 Worker进程内可以像普通的apache+php或者php-fpm中写代码。不需要像Node.js那样写异步回调的代码。</p>
+<h3 id="worker进程内的回调函数">Worker进程内的回调函数</h3>
+<p>onWorkerStart<br>
+onWorkerStop<br>
+onConnect<br>
+onClose<br>
+onReceive<br>
+onTimer<br>
+onFinish</p>
+<h2 id="taskworker进程">TaskWorker进程</h2>
+<p>Swoole的业务逻辑部分是同步阻塞运行的，如果遇到一些耗时较大的操作，例如访问数据库、广播消息等，就会影响服务器的响应速度。因此Swoole提供了Task功能，将这些耗时操作放到另外的进程去处理，当前进程继续执行后面的逻辑</p>
+<p>task进程必须是同步阻塞的,task进程支持定时器</p>
+<h3 id="taskworker进程内的回调函数">TaskWorker进程内的回调函数</h3>
+<p>onTask<br>
+onWorkerStart</p>
+<h2 id="职责功能">职责功能</h2>
+<h3 id="reactor线程-2">Reactor线程</h3>
+<p>负责维护客户端TCP连接、处理网络IO、处理协议、收发数据<br>
+完全是异步非阻塞的模式<br>
+全部为C代码，除Start/Shudown事件回调外，不执行任何PHP代码将<br>
+TCP客户端发来的数据缓冲、拼接、拆分成完整的一个请求数据包<br>
+Reactor以多线程的方式运行</p>
+<h3 id="worker进程-2">Worker进程</h3>
+<p>接受由Reactor线程投递的请求数据包，并执行PHP回调函数处理数据生成响应数据并发给<br>
+Reactor线程，由Reactor线程发送给TCP客户端<br>
+可以是异步非阻塞模式，也可以是同步阻塞模式<br>
+Worker以多进程的方式运行</p>
+<h3 id="taskworker进程-2">TaskWorker进程</h3>
+<p>接受由Worker进程通过swoole_server-&gt;task/taskwait方法投递的任务<br>
+处理任务，并将结果数据返回(swoole_server-&gt;finish)给Worker进程<br>
+完全是同步阻塞模式<br>
+TaskWorker以多进程的方式运行</p>
+<h3 id="关系">关系</h3>
+<p>可以理解为Reactor就是nginx，Worker就是php-fpm。Reactor线程异步并行地处理网络请求，然后再转发给Worker进程中去处理。Reactor和Worker间通过UnixSocket进行通信。在php-fpm的应用中，经常会将一个任务异步投递到Redis等队列中，并在后台启动一些php进程异步地处理这些任务。Swoole提供的TaskWorker是一套更完整的方案，将任务的投递、队列、php任务处理进程管理合为一体。通过底层提供的API可以非常简单地实现异步任务的处理。另外TaskWorker还可以在任务执行完成后，再返回一个结果反馈到Worker。Swoole的Reactor、Worker、TaskWorker之间可以紧密的结合起来，提供更高级的使用方式。一个更通俗的比喻，假设Server就是一个工厂，那Reactor就是销售，接受客户订单。而Worker就是工人，当销售接到订单后，Worker去工作生产出客户要的东西。而TaskWorker可以理解为行政人员，可以帮助Worker干些杂事，让Worker专心工作。</p>
+<p>底层会为Worker进程、TaskWorker进程分配一个唯一的ID不同的Worker和TaskWorker进程之间可以通过sendMessage接口进行通信</p>
+]]></content>
+    </entry>
+</feed>

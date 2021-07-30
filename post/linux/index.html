@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="sync
+为了加快对磁盘文件的读写速度，位于内存中的文件数据不会立即同步到磁盘，因此关机之前需要先进行 sync 同步操作。
+PATH
+可以在环境变量 PATH 中声明可执行文件的路径，路径之间用 : 分隔。
+/usr/local/bin:..." />
+    <meta name="keywords" content="linux" />
+    <link rel="stylesheet" href="https://greatewei.github.io/media/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://greatewei.github.io/styles/main.css">
+    <!-- 代码渲染风格css -->
+    
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.18.1/build/styles/rainbow.min.css">
+    
+    <!-- 代码高亮插件 -->
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.18.1/build/highlight.min.js"></script>
+    <!-- 代码复制插件 -->
+    <script src="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/js/clipboard.min.js"></script>
+    <!-- live2d插件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.13.1/css/all.min.css" rel="stylesheet">
+    <!-- 数学公式 -->
+    
+    <title>Linux </title>
+
+    <!-- 大纲索引css调整 -->
+    
+    <style>
+        .markdownIt-TOC {
+            margin-left: 28%;
+            padding-left: 2px;
+            width: 80%;
+        }
+
+        .markdownIt-TOC li {
+            padding-left: 8%;
+        }
+    </style>
+    
+</head>
+
+<body>
+    <div id="landlord">
+        <div class="message" style="opacity:0"></div>
+        <canvas id="live2d" width="240" height="250" class="live2d"></canvas>
+    </div>
+    <div id="domainname" style="display:none">https://greatewei.github.io</div>
+    <div id="content">
+        <div>
+            <!----------- 移动端导航栏👇 ----------------->
+            <div id="bar">
+                <head>
+  <!-- 引入Bootstrap核心样式文件 -->
+  <link rel="stylesheet" href="https://greatewei.github.io/media/css/bootstrap.min.css">
+</head>
+<style>
+  .navmobile {
+    z-index: 15;
+    max-height: 40vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+
+  @media screen and (max-width: 1200px) {
+    .navbar {
+      max-width: 100vw;
+    }
+  }
+
+  @media screen and (max-width:1200px) and (min-width: 768px) {
+    @media (min-width: 768px) {
+      .navbar-nav {
+        float: right;
+        margin: 0;
+      }
+    }
+  }
+
+  @media screen and (max-width:768px) {
+    .mbapspan {
+      padding: 0;
+    }
+  }
+</style>
+<div class="pjaxloading"  onclick="pjaxloadingClose()">
+  <div class="loadingbackground"></div>
+  <div id="loading">
+    <div class="loading">
+    </div>
+  </div>
+</div>
+<nav class="navbar navbar-inverse navbar-fixed-top navmobile">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#barmenu"
+        aria-expanded="false" id="barbutton">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a data-pjax class="navbar-brand" href="https://greatewei.github.io">Great Wei&nbsp;&nbsp;|</a>
+      <span class="navbar-brand mbapspan"><i id="mbaplayer" class="fa fa-play-circle-o" aria-hidden="true"
+          style="font-size: 28px;top: 12px;position: absolute;" onclick="aplayerPlay();"></i></span>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="barmenu">
+      <ul class="nav navbar-nav">
+        
+        
+        <li>
+          <a data-pjax href="/">
+            首页
+          </a>
+        </li>
+        
+        
+        
+        <li>
+          <a data-pjax href="/archives">
+            归档
+          </a>
+        </li>
+        
+        
+        
+        <li>
+          <a data-pjax href="/tags">
+            标签
+          </a>
+        </li>
+        
+        
+        
+        
+          
+        <li><a data-pjax href="https://greatewei.github.io/friends">友链</a></li>
+
+        
+        </ul>
+      </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+  </nav>
+
+
+  <!-- 引入jQuery核心js文件 -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+  <script>
+    let btstate = false;
+    var bt = $("#barbutton");
+    var bm = $("#barmenu");
+    bt.click(function () {
+      dropdown();
+    })
+    function dropdown() {
+      console.log(btstate);
+      //下拉
+      if (btstate == false) {
+        bt.removeClass("collapsed");
+        bt.attr("aria-expanded", "true");
+        bm.attr("aria-expanded", "true")
+        bm.fadeIn(700);
+        btstate = true;
+      }
+      else {
+        bt.addClass("collapsed");
+        bt.attr("aria-expanded", "false");
+        bm.removeClass("in");
+        bm.hide();
+        bm.attr("aria-expanded", "false");
+        btstate = false;
+      }
+    }
+  </script> 
+            </div>
+            <!----------- 移动端导航栏👆 ----------------->
+
+            <!--------------- pc端菜单栏👇 ---------------->
+            <div class="side"><head>
+    <link rel="stylesheet" href="https://greatewei.github.io/media/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://greatewei.github.io/styles/main.css">
+    
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.18.1/build/styles/rainbow.min.css">
+    
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.18.1/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/js/clipboard.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.13.1/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- fancybox -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+    <script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
+    <!--------- 数学公式👇---- -->
+    
+    <!--------- 数学公式👆----------------- -->
+    <!--------- daovocie功能👇 ------------------->
+    
+    <!--------- daovocie功能👆 ------------------->
+    <!-- -----------------twikoo评论系统引入👇 --------->
+    <script src="https://cdn.jsdelivr.net/npm/twikoo@1.3.1/dist/twikoo.all.min.js"></script>
+    <!-- -----------------twikoo评论系统引入👆 --------->
+    <!---------------- leancloud api 功能依赖引入👇 -------->
+    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@3.13.0/dist/av-min.js"></script>
+    <!---------------- leancloud api 功能依赖引入👆 -------->
+    <!------------------ valine评论系统引入👇 ------------------>
+    <script src="https://greatewei.github.io/media/js/valine.min.js"></script>
+    <!------------------ valine评论系统引入👆 ------------------>
+    <!---------------- 今日诗词api功能依赖👇 ----------------------->
+    <script src="https://sdk.jinrishici.com/v2/browser/jinrishici.js" charset="utf-8"></script>
+    <!---------------- 今日诗词api功能依赖👆 ----------------------->
+    <!---------------- 今日诗词api功能依赖👇 ----------------------->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/ispeak-bber/ispeak-bber.min.js" charset="utf-8"></script>
+    <!---------------- 哔哔功能依赖👆 ----------------------->
+
+
+</head>
+
+<style>
+    body {
+        overflow-x: hidden;
+        height: 100vh;
+        overflow-y: scroll;
+        cursor: url("https://greatewei.github.io/media/images/mouse_cursor.png"), auto
+    }
+</style>
+
+<body>
+    <!--=------ 页面加载动态画面👇 --------------->
+    <div class="pjaxloading" onclick="pjaxloadingClose()">
+        <div class="loadingbackground"></div>
+        <div id="loading-aname">
+            <div class="loading-aname">
+            </div>
+        </div>
+    </div>
+    <!--=------ 页面加载动态画面👆 --------------->
+
+    <!--------------- 左侧菜单栏👇 ------------------------>
+    
+    <div id=side>
+        <div class="r_m_div">
+            <a onclick="showAaplayer()"><i style="font-size: 20px;"><img
+                        src='https://greatewei.github.io/media/images/music.png' alt="音乐播放器" class="musicbtn"></i></a>
+        </div>
+        <div class="avatar-border">
+            <img src="https://greatewei.github.io/images/avatar.png?v=1627625438943" class="avatar">
+        </div>
+        <div class="sitename">Great Wei</div>
+        <span class="description" data-text='[""]'>&nbsp;</span>
+        <div class="siteinfocontainer">
+            <span class="siteinfo">文章</span>
+            <span class="siteinfo">标签</span>
+        </div>
+        <div class="siteinfocontainer">
+            <span class="siteinfo" id="siteinfo-postsnum"></span>
+            <span class="siteinfo">16</span>
+        </div>
+        
+        <div class="search">
+            <!-- <input type="text" class="search-input" placeholder="标题搜索(●'◡'●)" /> -->
+            <input type="text" class="search-input" placeholder="标题搜索 ⚆_⚆ つ♡">
+            <div class="search-results"></div>
+        </div>
+        
+    <div class="share-button">
+        <span></span>
+        
+        
+        
+        
+        
+        
+        
+        
+    </div>
+    <div id="qq" style="display:none"></div>
+    <!------------ 加载菜单按钮👇 ------------------------->
+    <div class="menucontainer">
+        
+        
+        <div class="mchocie description">
+            <a data-pjax href="/" class="menubutton" style="margin-right: 15px;">
+                <i><img class="icon menuicon" src="" alt="首页"></i>&nbsp;<span
+                    data-text="首页">首页</span>
+            </a>
+        </div>
+        
+        
+        
+        <div class="mchocie description">
+            <a data-pjax href="/archives" class="menubutton" style="margin-right: 15px;">
+                <i><img class="icon menuicon" src="" alt="归档"></i>&nbsp;<span
+                    data-text="归档">归档</span>
+            </a>
+        </div>
+        
+        
+        
+        <div class="mchocie description">
+            <a data-pjax href="/tags" class="menubutton" style="margin-right: 15px;">
+                <i><img class="icon menuicon" src="" alt="标签"></i>&nbsp;<span
+                    data-text="标签">标签</span>
+            </a>
+        </div>
+        
+        
+
+        
+        
+        
+        <div class="mchocie description">
+            <a data-pjax href="https://greatewei.github.io/friends" class="menubutton" style="margin-right: 15px;">
+                <i><img class="icon menuicon" src="" alt="友人帐"></i>&nbsp;<span data-text="友人帐">友人帐</span>
+            </a>
+        </div>
+        
+        <!--  -->
+    </div>
+    <!------------ 加载菜单按钮👆 ------------------------->
+    <hr>
+    <style>
+    .copyright {
+        font-size: 15px;
+        color: #d9d9d9;
+    }
+
+
+    @media screen and (min-width: 1200px) {
+        .foot {
+            width: 100%;
+            height: 130px;
+        }
+    }
+
+    @media screen and (max-width: 1200px) {
+        .foot {
+            display: none;
+        }
+    }
+</style>
+
+<body>
+    <div class="foot">
+        <div id="footinfo">Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | Theme: <a
+                href="https://github.com/850552586/gridea-theme-fog">Fog</a>
+            <div>
+                
+            </div>
+            <div>
+                
+            </div>
+            <div class="copyright" style="color:white;text-align: center;">Copyright © 2020  备案号: 鄂ICP备...号
+            </div>
+        </div>
+
+
+
+    </div>
+</body>
+
+    </div>
+
+
+    <script src="https://greatewei.github.io/media/js/wordshow.js"></script>
+    
+    <!--------------- 左侧菜单栏👆 ------------------------>
+
+    <!----------------- 顶部菜单栏👇 ------------------------>
+    
+    <!----------------- 顶部菜单栏👆 ------------------------>
+
+<!--核心功能加载-->
+<script src="https://greatewei.github.io/media/js/mainfunc.js"></script>
+
+<!------------- Fog1.0版本彩蛋👇 -------------->
+    <!-- <section id="terrestrial" class="popup">
+        <a href="#" class="back">&lt; back</a>
+    </section>
+
+    <div class="flycontainer">
+        <div class="flyword">御风飞行中...</div>
+    </div>
+
+    <script>
+        $("#fog_go").click(function(){fog_go()});
+        async function fog_go(){
+            $(".bars").hide()
+            $("#live2d").hide()
+            await sleep(3000);
+            $(".flycontainer").css("display","flex");
+            $(".popup").fadeOut(500)
+            await sleep(2000);
+            var sitename = "Great Wei";
+            getFogUser(sitename);
+        }
+
+        function fog_goregis(){
+            var sitename = "Great Wei";
+            var siteurl = "https://greatewei.github.io";
+            regisFogUser(sitename,siteurl);
+        }
+        fog_goregis();
+    </script> -->
+<!------------- Fog1.0版本彩蛋👆 -------------->
+
+
+<!------ 根据自定义配置声明变量👇 --------------------->
+    
+    <script>
+        let postnumChoice = false
+    </script>
+    
+    
+    <script>
+        let shareChoice = true
+    </script>
+    
+    
+    <script>
+        let donateChoice = true
+    </script>
+    
+    
+    <script>
+        let searchChoice = true
+    </script>
+    
+    <script>let postsnum = 0;</script>
+    <div id="side-posttitle" style="display: none;">
+    
+    
+    Croc文件传输工具
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    AWS lambda实现s3图片资源数据万象
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Go日志转发服务设计
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Kafka磁盘扩容
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Prometheus监控告警系统
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    MQTT协议 简介
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    美图长连接平台 简介
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    长连接平台架构
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Swoole实现IM
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Swoole架构
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Zookeeper集群 + canal服务简介
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Http 
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Crontab 
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Linux 
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    计算机操作系统-链接
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    计算机操作系统-设备管理
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    计算机操作系统-内存管理
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    计算机操作系统-死锁
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    RabbitMQ 简介
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    计算机操作系统-进程管理
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    浅谈Mysql索引
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    图解Tcp/Ip
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    思维锻炼
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    
+    
+    Go Tcp客户端/服务端
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Phabricator作为Code Review工具
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    工具
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Elasticsearch
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Elk
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Nginx
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    
+    Mysql
+    <script>
+        postsnum += 1
+    </script>
+    
+    
+    </div>
+    
+        <script>
+            let menupos = 'left';
+            $("#siteinfo-postsnum").html(postsnum);
+        </script>
+    
+    <!------ 根据自定义配置声明变量👆 --------------------->
+
+
+    <!----------根据自定义配置设置图标信息👇---------->
+    <script>
+        var icondict = new Array();
+    </script>
+    
+    <!----------根据自定义配置设置图标信息👆---------->
+</body>
+
+<script src="https://greatewei.github.io/media/share/dist/Share.js"></script>
+<!-- 页面pjax测试 -->
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery.pjax/2.0.1/jquery.pjax.js"></script>
+<!--确保jQuery已经在此之前加载-->
+<!-- <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script> -->
+<script src="https://greatewei.github.io/media/js/all-pjax.js"></script>
+<script>
+    //-------------------------------说说功能👇--------------------------------------
+    let talksall = [];
+    let talks = [];
+    let talkindex = 0;
+    get();
+
+    function get() {
+        var t = JSON.parse('[]');
+        talkindex = t.length - 1;
+        for (var i = 0; i <= t.length - 1; i++) {
+            var d = {};
+            d["time"] = t[i].time;
+            d["author"] = t[i].author;
+            d["text"] = t[i].text;
+            d["img"] = t[i].img;
+            talksall.push(d);
+        }
+    }
+
+    function add() {
+        for (var i = talkindex; i >= 0 && i > talkindex - 3; i--) {
+            talks.push(talksall[i]);
+        }
+        talkindex = (talkindex - 3) >= 0 ? (talkindex - 3) : -1;
+        if (talkindex < 0) $("#getmorebt").hide();
+        show();
+    }
+
+    function show() {
+        var talkT = document.getElementById("talkContainer");
+        talkT.innerHTML = "";
+        for (var i = 0; i < talks.length; i++) {
+            if (talks[i].img != '') {
+                talkT.innerHTML += '\
+            <div class="talk" v-for="t in talks"> \
+                <span data-fancybox="images" href="' + talks[i].img + '"><img src="' + talks[i].img + '" class="talkimg"></span> \
+                <div class="ainfo">\
+                    <div class="ainfo-intro">\
+                        <div class="author">' + talks[i].author + '</div>·\
+                        <div class="time">' + talks[i].time + '</div>\
+                    </div>\
+                </div>\
+                <div class="talkcontent">' + talks[i].text + '\
+                </div\>\
+            ';
+            } else {
+                talkT.innerHTML += '\
+            <div class="talk" v-for="t in talks"> \
+                <div class="ainfo">\
+                    <div class="ainfo-intro">\
+                        <div class="author">' + talks[i].author + '</div>·\
+                        <div class="time">' + talks[i].time + '</div>\
+                    </div>\
+                </div>\
+                <div class="talkcontent">' + talks[i].text + '\
+                </div\>\
+            ';
+            }
+        }
+    }
+    //-------------------------------说说功能👆--------------------------------------
+</script>
+
+<!---->
+<script>
+    function replaceAvatar() {
+        twikoo_avatar = $(".tk-avatar-img");
+        for (var i = 0; i < twikoo_avatar.length; i++) {
+            var asrc = twikoo_avatar.eq(i).attr('src');
+            if (asrc.search('cn.gravatar.com') != -1) {
+                twikoo_avatar.eq(i).attr('src', 'https://greatewei.github.io/media/images/comavatar.png');
+            }
+        }
+    }
+
+    function showWechat() {
+        var wechat = '';
+        alert("博主微信号：" + wechat);
+        return false;
+    }
+</script>
+
+<script>
+    /**
+     * https://github.com/tangkaichuan/gridea-search
+     */
+    // 检查缓存是否最新
+    function checkCache() {
+        var caches_postsnum = localStorage.getItem("postsnum");
+        var pt = document.getElementById("side-posttitle").innerHTML;
+        pt = pt.replace(/\s+/g, '').replace(/<script>.*?<\/script>/gi, "")
+        var ptlen = pt.length;
+        var ptlen_storage = localStorage.getItem("poststitlelen");
+        if (caches_postsnum != postsnum || ptlen != ptlen_storage) {
+            console.log("更新缓存");
+            return false
+        }
+        return true;
+    }
+
+    (function () {
+        var CACHES = checkCache()
+        if (!CACHES) {
+            var NOW = Date.now()
+            var API_CONTENT = '../api-content/index.html' + '?_=' + NOW
+            preload(API_CONTENT);
+            getContents(show_getContentresult);
+        }
+
+        function show_getContentresult(data) {
+            console.log("获取成功");
+            var postslen = data["posts"].length;
+            localStorage.setItem('postsnum', postslen);
+            var poststitlelen = 0;
+            var pt = document.getElementById("side-posttitle").innerHTML;
+            pt = pt.replace(/\s+/g, '').replace(/<script>.*?<\/script>/gi, "");
+            localStorage.setItem('poststitlelen', pt.length);
+        }
+
+
+
+        // preload
+        function preload(url) {
+            var preloadLink = document.createElement('link')
+            preloadLink.href = url
+            preloadLink.rel = 'preload'
+            preloadLink.as = 'fetch'
+            preloadLink.crossOrigin = 'anonymous'
+            document.head.appendChild(preloadLink)
+        }
+
+        // 异步 GET 请求
+        function get(obj) {
+            var xhr = new XMLHttpRequest()
+            xhr.open('get', obj.url, true)
+            xhr.send(null)
+            xhr.onreadystatechange = function () {
+                // 异步请求：响应状态为4，数据加载完毕
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        obj.success(xhr.responseText)
+                    } else {
+                        obj.error(xhr.status)
+                    }
+                }
+            }
+        }
+
+        // 获取博客全文 api
+        function getContents(callback) {
+            if (CACHES) {
+                callback(CACHES.contents)
+            } else {
+                get({
+                    url: API_CONTENT,
+                    success: function (data) {
+                        callback(JSON.parse(data));
+                        localStorage.setItem('ContentsCache', data);
+                        getStorageContent();
+                    }
+                })
+            }
+        }
+    })()
+    //------------------------核心功能--pjax全局渲染👇-------------------
+    let talkinit = false;
+    $(document).pjax('a[data-pjax]', '#main', {
+        fragment: '#main',
+        timeout: 8000
+    }).on('pjax:complete', function () {
+        //代码块高亮渲染
+        document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
+        });
+        //文章热度
+        if(postnumChoice){
+            getHotnum();
+        }
+        //文章索引
+        toginit();
+        //清空搜索栏
+        if (searchChoice) {
+            searchInit();
+            searchInput.value = "";
+        }
+        var pl = window.location.pathname;
+        //说说更新
+        if (pl.search("talk") != -1 && !talkinit) {
+            add();
+            talkinit = true;
+        } else if (pl.search("talk") != -1) {
+            show();
+        }
+        if (pl.search("post") != -1) {
+            if (shareChoice)
+                shareInit();
+            if (donateChoice)
+                donateInit();
+            lazyload();
+            codeinit();
+            if ("valine" == "twikoo") {
+                //twikoo头像更换
+                setTimeout(replaceAvatar, 3000);
+                setTimeout(replaceAvatar, 8000); //部分博主站点速度加载过慢，再添加一个延迟
+            }
+        }
+        if (btstate == true)
+            dropdown();
+    }).on('pjax:start', function () {
+        $(".pjaxloading").fadeIn(50);
+    }).on('pjax:end', function () {
+        $(".pjaxloading").fadeOut(50);
+    });
+    //------------------------核心功能--pjax全局渲染👆-------------------
+
+    //-------------------------------------------------搜索
+    // 获取搜索框、搜索按钮、清空搜索、结果输出对应的元素
+    if (searchChoice) {
+        var searchInput = document.querySelector('.search-input');
+        var searchResults = document.querySelector('.search-results');
+    }
+    // 申明保存文章的标题、链接、内容的数组变量
+    var searchValue = '',
+        arrItems = [],
+        arrLinks = [],
+        arrTitles = [],
+        arrContents = [],
+        arrResults = [],
+        indexItem = [],
+        itemLength = 0;
+    var tmpDiv = document.createElement('div');
+    tmpDiv.className = 'result-item';
+
+
+    function getStorageContent() {
+        var data = localStorage.getItem('ContentsCache');
+        data = JSON.parse(data);
+        posts = data["posts"];
+        for (var i = 0; i < posts.length; i++) {
+            arrLinks[i] = posts[i].link;
+            arrTitles[i] = posts[i].title;
+            arrContents[i] = posts[i].content;
+            itemLength++;
+        }
+    }
+    if (checkCache())
+        getStorageContent();
+    // 输入框内容变化后就开始匹配，可以不用点按钮
+    // 经测试，onkeydown, onchange 等方法效果不太理想，
+    // 存在输入延迟等问题，最后发现触发 input 事件最理想，
+    // 并且可以处理中文输入法拼写的变化
+    searchInput.oninput = function () {
+        setTimeout(searchConfirm, 0);
+    }
+    searchInput.onfocus = function () {
+        searchResults.style.display = 'block';
+    }
+
+    function searchConfirm() {
+        if (searchInput.value == '') {
+            searchResults.style.display = 'none';
+        } else if (searchInput.value.search(/^\s+$/) >= 0) {
+            // 检测输入值全是空白的情况
+            searchInit();
+            var itemDiv = tmpDiv.cloneNode(true);
+            itemDiv.innerText = '请输入有效内容...';
+            searchResults.appendChild(itemDiv);
+        } else {
+            // 合法输入值的情况
+            searchInit();
+            searchValue = searchInput.value;
+            // 在标题、内容中查找
+            searchMatching(arrTitles, arrContents, searchValue);
+        }
+    }
+
+    // 每次搜索完成后的初始化
+    function searchInit() {
+        arrResults = [];
+        indexItem = [];
+        searchResults.innerHTML = '';
+        searchResults.style.display = 'block';
+    }
+
+    function searchMatching(arr1, arr2, input) {
+        // 忽略输入大小写
+        input = new RegExp(input, 'i');
+        var step = 10;
+        // 在所有文章标题、内容中匹配查询值
+        for (i = 0; i < itemLength; i++) {
+            var indexContent = arr2[i].search(input);
+            //标题匹配
+            if (arr1[i].search(input) != -1) {
+                indexItem.push(i); // 保存匹配值的索引
+                if (indexContent != -1) {
+                    startindex = (indexContent - step) >= 0 ? (indexContent - step) : 0;
+                    var searchcontent = arr2[i].slice(indexContent - step, indexContent + 5)
+                    arrResults.push("....." + searchcontent + ".....");
+                } else
+                    arrResults.push("");
+            }
+            //内容匹配
+            else if (indexContent != -1) {
+                indexItem.push(i); // 保存匹配值的索引
+
+                startindex = (indexContent - step) >= 0 ? (indexContent - step) : 0;
+                var searchcontent = arr2[i].slice(indexContent - step, indexContent + 5)
+                arrResults.push("....." + searchcontent + ".....");
+            }
+        }
+
+        // 输出总共匹配到的数目
+        var totalDiv = tmpDiv.cloneNode(true);
+        totalDiv.innerHTML = '<b>总匹配：' + indexItem.length + ' 项<hr></b>';
+        searchResults.appendChild(totalDiv);
+
+        // 未匹配到内容的情况
+        if (indexItem.length == 0) {
+            var itemDiv = tmpDiv.cloneNode(true);
+            itemDiv.innerText = '未匹配到内容...';
+            searchResults.appendChild(itemDiv);
+        }
+
+        // 将所有匹配内容进行组合
+        for (i = 0; i < arrResults.length; i++) {
+            var itemDiv = tmpDiv.cloneNode(true);
+            itemDiv.innerHTML = '<a data-pjax class="searchresults" href="' + arrLinks[indexItem[i]] + '"><b>[' +
+                arrTitles[indexItem[i]] +
+                ']</b><p>' + arrResults[i] + '</p></a><hr />';
+            searchResults.appendChild(itemDiv);
+        }
+    }
+</script>
+
+
+
+<!--------------------- 菜单栏图标加载功能👇 ----------------------->
+<script>
+var menulist = $(".menuicon");
+var menulength = menulist.length;
+for (var i = 0; i < menulength; i++) {
+    var altname = menulist.eq(i).attr("alt");
+    var iconurl = icondict[altname];
+    if (iconurl == undefined || iconurl == '')
+        continue;
+    if (iconurl == 'Home') {
+        menulist.eq(i).attr("src", "https://greatewei.github.io/media/images/Home.png");
+menulist.eq(i).show();
+} else if (iconurl == 'Archive') {
+menulist.eq(i).attr("src", "https://greatewei.github.io/media/images/Archive.png");
+menulist.eq(i).show();
+} else if (iconurl == 'Tag') {
+menulist.eq(i).attr("src", "https://greatewei.github.io/media/images/Tag.png");
+menulist.eq(i).show();
+} else if (iconurl == 'About') {
+menulist.eq(i).attr("src", "https://greatewei.github.io/media/images/About.png");
+menulist.eq(i).show();
+} else if (iconurl == 'Talk') {
+menulist.eq(i).attr("src", "https://greatewei.github.io/media/images/Talk.png");
+menulist.eq(i).show();
+} else if (iconurl == 'Friends') {
+menulist.eq(i).attr("src", "https://greatewei.github.io/media/images/Friends.png");
+menulist.eq(i).show();
+} else if (iconurl == 'Fly') {
+menulist.eq(i).attr("src", "https://greatewei.github.io/media/images/wind.png");
+menulist.eq(i).show();
+} else {
+menulist.eq(i).attr("src", iconurl);
+menulist.eq(i).show();
+}
+}
+</script>
+<!--------------------- 菜单栏图标加载功能👆 ----------------------->
+
+<script>
+    //--------------------bber-onetalk加载👇--------------------------------
+    function bberonetalkLoad(){
+        bberjsonurl = '';
+        if ( $("#bber-talk").length > 0 ) {
+        jsonUrl = bberjsonurl
+        $.getJSON(jsonUrl+"?t="+Date.parse( new Date()),function(res){
+        var bberHtml = ''
+        $.each(res.data, function(i, item){
+            d = new Date(item.date)
+            date = d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate() +' '+d.getHours()+':'+d.getMinutes()+':'+d.getSeconds()
+            dataTime = '<span class="datatime">'+date+'</span>'
+            bberHtml += '<li class="item item-'+(i+1)+'">'+dataTime+'： <a data-pjax href="https://greatewei.github.io/bber">'+item.content+'</a></li>'
+        });
+        $('#bber-talk').append('<span class="index-talk-icon"><svg viewBox="0 0 1024 1024" width="21" height="21"><path d="M184.32 891.667692c-12.603077 0-25.206154-2.363077-37.809231-7.876923-37.021538-14.966154-59.864615-49.624615-59.864615-89.009231v-275.692307c0-212.676923 173.292308-385.969231 385.969231-385.969231h78.76923c212.676923 0 385.969231 173.292308 385.969231 385.969231 0 169.353846-137.846154 307.2-307.2 307.2H289.083077l-37.021539 37.021538c-18.904615 18.116923-43.323077 28.356923-67.741538 28.356923zM472.615385 195.347692c-178.018462 0-322.953846 144.935385-322.953847 322.953846v275.692308c0 21.267692 15.753846 29.144615 20.48 31.507692 4.726154 2.363077 22.055385 7.876923 37.021539-7.08923l46.473846-46.473846c6.301538-6.301538 14.178462-9.452308 22.055385-9.452308h354.461538c134.695385 0 244.184615-109.489231 244.184616-244.184616 0-178.018462-144.935385-322.953846-322.953847-322.953846H472.615385z"></path><path d="M321.378462 512m-59.076924 0a59.076923 59.076923 0 1 0 118.153847 0 59.076923 59.076923 0 1 0-118.153847 0Z"></path><path d="M518.301538 512m-59.076923 0a59.076923 59.076923 0 1 0 118.153847 0 59.076923 59.076923 0 1 0-118.153847 0Z"></path><path d="M715.224615 512m-59.076923 0a59.076923 59.076923 0 1 0 118.153846 0 59.076923 59.076923 0 1 0-118.153846 0Z"></path></svg></span><ul class="talk-list">'+bberHtml+'</ul>')
+        //Lately({ 'target': '#bber-talk .datatime' });
+        });
+        function Roll (){
+        var list_li = $('.talk-list li'),cur_li = list_li.first(),last_li = list_li.last();
+        last_li.after(cur_li);
+        };
+        setInterval(Roll,3000);
+    }
+    }
+  //--------------------bber-onetalk加载👆--------------------------------
+</script>
+
+
+</div>
+            <!--------------- pc端菜单栏👆 ---------------->
+
+            <!-- ----------------左侧菜单栏html 👇-------------------------------------->
+            
+            <div>
+                <div id="tab1" class="tab">
+                    <div class="bars">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="close"></div>
+                </div>
+                <div class="col-md-1 col-lg-3"></div>
+                <!-- main标签，pjax渲染时加载以下内容👇 -->
+                <div id="main" class="col-xs-12 col-sm-12 col-md-12 col-lg-7" style="padding:0;">
+                    <link rel="stylesheet" href="https://greatewei.github.io/media/css/font-awesome.css">
+
+<body>
+    <div class="allcontent" id="postdetail">
+        <div class="postshow postpadding" style="padding-bottom: 0;">
+            
+            <div class="postdetailimg">
+                
+                <img src="/media/images/custom-postdefaultimage.jpeg" class="postimage">
+                
+            </div>
+            <div class="postinfo-detail">
+                <div class="postdate"><i class="fa fa-calendar"></i>2020-04-07</div>
+            <div class="poststatus postdate"><i class="fa fa-clock-o"></i> 13 min read</div>
+            <div class="posttag">
+                
+                <a data-pjax href="https://greatewei.github.io/tag/S56XvLf_F/" class="postlink">
+                    <i class="fa fa-tag"></i> linux
+                </a>
+                
+            </div>
+        </div>
+        
+        <div id="articlecontent">
+            <div id="texttitle" style="text-align: center">
+                <h2 id="ptitle">Linux </h2>
+                <!-- id 将作为查询条件 -->
+                <div id="pl" style="display:none">https://greatewei.github.io/post/linux/</div>
+                <div id="rootaddr" style="display:none">https://greatewei.github.io</div>
+                
+            </div>
+            <div class="text ">
+                <h2 id="sync">sync</h2>
+<p>为了加快对磁盘文件的读写速度，位于内存中的文件数据不会立即同步到磁盘，因此关机之前需要先进行 sync 同步操作。</p>
+<h2 id="path">PATH</h2>
+<p>可以在环境变量 PATH 中声明可执行文件的路径，路径之间用 : 分隔。</p>
+<pre><code>/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/dmtsai/.local/bin:/home/dmtsai/bin
+</code></pre>
+<h2 id="磁盘的文件名">磁盘的文件名</h2>
+<p>Linux 中每个硬件都被当做一个文件，包括磁盘。磁盘以磁盘接口类型进行命名，常见磁盘的文件名如下：<br>
+IDE 磁盘：/dev/hd[a-d]<br>
+SATA/SCSI/SAS 磁盘：/dev/sd[a-p]<br>
+其中文件名后面的序号的确定与系统检测到磁盘的顺序有关，而与磁盘所插入的插槽位置无关。</p>
+<h2 id="分区">分区</h2>
+<p>磁盘分区表主要有两种格式，一种是限制较多的 MBR 分区表，一种是较新且限制较少的 GPT 分区表。</p>
+<h3 id="mbr">MBR</h3>
+<p>MBR 中，第一个扇区最重要，里面有主要开机记录（Master boot record, MBR）及分区表（partition table），其中主要开机记录占 446 bytes，分区表占 64 bytes。<br>
+分区表只有 64 bytes，最多只能存储 4 个分区，这 4 个分区为主分区（Primary）和扩展分区（Extended）。其中扩展分区只有一个，它使用其它扇区来记录额外的分区表，因此通过扩展分区可以分出更多分区，这些分区称为逻辑分区。<br>
+Linux 也把分区当成文件，分区文件的命名方式为：磁盘文件名 + 编号，例如 /dev/sda1。注意，逻辑分区的编号从 5 开始。</p>
+<h2 id="文件系统">文件系统</h2>
+<h3 id="分区与文件系统">分区与文件系统</h3>
+<p>对分区进行格式化是为了在分区上建立文件系统，一个分区通常只能格式化为一个文件系统，但是磁盘阵列等技术可以将一个分区格式化为多个文件系统。</p>
+<h3 id="组成">组成</h3>
+<p>最主要的几个组成部分如下：<br>
+innode:一个文件占用一个inode,记录文件的属性，同时记录此文件的内容所在block编号。<br>
+block：记录文件内容，文件太大时，会占用多个block.<br>
+除此之外还包括<br>
+superblock:记录文件系统的整体信息，包括inode和block的总量，剩余量，使用量，以及文件系统的格式与相关信息等；<br>
+block bitmap：记录block是否被使用的位图。<br>
+<img src="https://camo.githubusercontent.com/af36cfca3a3122a49b13b40ec7ec4e54bf15b4c6/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f4253445f6469736b2e706e67" alt="" loading="lazy"></p>
+<h3 id="文件读取">文件读取</h3>
+<p>对于EXT2文件系统，当要读取一个文件的内容时，先在inode中查找文件内容所在的所有block,然后把所有的内容读出来。<br>
+<img src="https://camo.githubusercontent.com/d81f8e4f37dc78a5f804a1dbe51c57a26685107f/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f31326136356363362d323065302d343730362d396665362d3362613439343133643766362e706e67" alt="" loading="lazy"></p>
+<p>而对于FAT文件系统，它没有inode,每个block中存储着下一个block的编号。<br>
+<img src="https://camo.githubusercontent.com/9e96d72b5464a3db0c8026716079bc44c9cf462a/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f35623731386538362d373130322d346262362d386361352d6431646437393135333063352e706e67" alt="" loading="lazy"></p>
+<h3 id="磁盘碎片">磁盘碎片</h3>
+<p>☞一个文件内容所在的block过于分散，导致磁盘磁头移动距离过大，从而降低磁盘的读写性能。</p>
+<h3 id="block">block</h3>
+<p>在Ext2文件系统中所支持的block大小有1k，2k及4k三种，不同的大小限制了单个文件和文件系统的最大大小。<br>
+一个block只能被一个文件所使用，未使用的部分直接浪费了。因此如果需要存储大量的小文件，那么最好选用比较小的block。</p>
+<h3 id="inode">inode</h3>
+<p>inode具体包含以下信息：<br>
+权限、拥有者/群组、容量、建立或状态改变时间、最近读取时间、最近修改时间、定义文件特性的旗标、改文件真正内容的指向。</p>
+<p>inode具有以下特点：<br>
+每个inode大小均固定为128bytes (新的ext4 与 xfs可设定到256bytes)<br>
+每个文件都仅会占用一个inode</p>
+<p>inode 中记录了文件内容所在的 block 编号，但是每个 block 非常小，一个大文件随便都需要几十万的 block。而一个 inode 大小有限，无法直接引用这么多 block 编号。因此引入了间接、双间接、三间接引用。间接引用让 inode 记录的引用 block 块记录引用信息。</p>
+<h3 id="目录">目录</h3>
+<p>建立一个目录时，会分配一个inode与至少一个block，block记录的内容是目录下所有文件的inode编号以及文件名。<br>
+可以看到文件的inode本身不记录文件名，文件名记录在目录中，因此新增文件，删除文件，更改文件名这些操作与目录的写权限有关。</p>
+<h3 id="日志">日志</h3>
+<p>如果突然断电，那么文件系统会发生错误，例如断电前只修改了block bitmap，而还没有将数据真正写入block中。ext3/ext4文件系统引入了日志功能，可以利用日志来修复文件系统。</p>
+<h3 id="挂载">挂载</h3>
+<p>挂载利用目录作为文件系统的进入点，也就是说，进入目录之后就可以读取文件系统的数据。</p>
+<h3 id="目录配置">目录配置</h3>
+<p>为了使不同linux发行版本的目录结构保持一致性，FHS规定了Linux的目录结构。最基础的三个目录如下：<br>
+/root /usr /var<br>
+<img src="https://camo.githubusercontent.com/b12257cb7875cb1263998e35d1826d5032484d25/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f6c696e75782d66696c6573797374656d2e706e67" alt="" loading="lazy"></p>
+<h2 id="文件">文件</h2>
+<h3 id="文件属性">文件属性</h3>
+<p>用户分为三种：文件拥有者、群组以及其它人，对不同的用户有不同的文件权限。</p>
+<p>使用 ls 查看一个文件时，会显示一个文件的信息，例如 drwxr-xr-x 3 root root 17 May 6 00:14 .config，对这个信息的解释如下：</p>
+<p>drwxr-xr-x：文件类型以及权限，第 1 位为文件类型字段，后 9 位为文件权限字段<br>
+3：链接数<br>
+root：文件拥有者<br>
+root：所属群组<br>
+17：文件大小<br>
+May 6 00:14：文件最后被修改的时间<br>
+.config：文件名<br>
+常见的文件类型及其含义有：</p>
+<p>d：目录<br>
+-：文件<br>
+l：链接文件<br>
+9 位的文件权限字段中，每 3 个为一组，共 3 组，每一组分别代表对文件拥有者、所属群组以及其它人的文件权限。一组权限中的 3 位分别为 r、w、x 权限，表示可读、可写、可执行。</p>
+<p>文件时间有以下三种：</p>
+<p>modification time (mtime)：文件的内容更新就会更新；<br>
+status time (ctime)：文件的状态（权限、属性）更新就会更新；<br>
+access time (atime)：读取文件时就会更新。</p>
+<h3 id="文件与目录的基本操作">文件与目录的基本操作</h3>
+<p>....</p>
+<h3 id="链接">链接</h3>
+<figure data-type="image" tabindex="1"><img src="https://camo.githubusercontent.com/160b6c73de6ad65d706650af3e95a7ae6f2be4d6/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f31653436666430332d306364612d346436302d396231632d3063323536656461663662322e706e67" alt="" loading="lazy"></figure>
+<p>实体链接<br>
+在目录下创建一个条目，记录着文件名与 inode 编号，这个 inode 就是源文件的 inode。<br>
+删除任意一个条目，文件还是存在，只要引用数量不为 0。<br>
+有以下限制：不能跨越文件系统、不能对目录进行链接。</p>
+<p>ln /etc/crontab .<br>
+ll -i /etc/crontab crontab<br>
+34474855 -rw-r--r--. 2 root root 451 Jun 10 2014 crontab<br>
+34474855 -rw-r--r--. 2 root root 451 Jun 10 2014 /etc/crontab<br>
+符号链接<br>
+符号链接文件保存着源文件所在的绝对路径，在读取时会定位到源文件上，可以理解为 Windows 的快捷方式。</p>
+<p>当源文件被删除了，链接文件就打不开了。</p>
+<p>因为记录的是路径，所以可以为目录建立符号链接。</p>
+<p>ll -i /etc/crontab /root/crontab2<br>
+34474855 -rw-r--r--. 2 root root 451 Jun 10 2014 /etc/crontab<br>
+53745909 lrwxrwxrwx. 1 root root 12 Jun 23 22:31 /root/crontab2 -&gt; /etc/crontab</p>
+<h2 id="进程管理">进程管理</h2>
+<h3 id="查看进程">查看进程：</h3>
+<p>ps -l 查看自己的进程<br>
+ps aux 查看系统所有进程<br>
+ps aux | grep php 查看特定进程<br>
+pstree -A 查看所有进程树<br>
+top 实时显示进程信息<br>
+top -d 2 两秒刷新一次<br>
+netstat</p>
+<h3 id="查看占用端口的进程">查看占用端口的进程</h3>
+<p>netstat -anp | grep port</p>
+<h3 id="进程状态">进程状态</h3>
+<figure data-type="image" tabindex="2"><img src="https://camo.githubusercontent.com/18fd4fa4f90c39ea3024bc7e330940ed5761b201/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f32626162343132372d336537642d343863632d393134652d3433366265383539666230352e706e67" alt="" loading="lazy"></figure>
+<h3 id="sigchld">SIGCHLD</h3>
+<p>当一个子进程改变了它的状态时（停止运行，继续运行或者退出），有两件事会发生在父进程中：</p>
+<p>得到 SIGCHLD 信号；<br>
+waitpid() 或者 wait() 调用会返回。<br>
+其中子进程发送的 SIGCHLD 信号包含了子进程的信息，比如进程 ID、进程状态、进程使用 CPU 的时间等。</p>
+<p>在子进程退出时，它的进程描述符不会立即释放，这是为了让父进程得到子进程信息，父进程通过 wait() 和 waitpid() 来获得一个已经退出的子进程的信息。</p>
+<h3 id="wait">wait()</h3>
+<p>父进程调用 wait() 会一直阻塞，直到收到一个子进程退出的 SIGCHLD 信号，之后 wait() 函数会销毁子进程并返回。</p>
+<p>如果成功，返回被收集的子进程的进程 ID；如果调用进程没有子进程，调用就会失败，此时返回 -1，同时 errno 被置为 ECHILD。</p>
+<p>参数 status 用来保存被收集的子进程退出时的一些状态，如果对这个子进程是如何死掉的毫不在意，只想把这个子进程消灭掉，可以设置这个参数为 NULL。</p>
+<h3 id="waitpid">waitpid()</h3>
+<p>作用和 wait() 完全相同，但是多了两个可由用户控制的参数 pid 和 options。</p>
+<p>pid 参数指示一个子进程的 ID，表示只关心这个子进程退出的 SIGCHLD 信号。如果 pid=-1 时，那么和 wait() 作用相同，都是关心所有子进程退出的 SIGCHLD 信号。</p>
+<p>options 参数主要有 WNOHANG 和 WUNTRACED 两个选项，WNOHANG 可以使 waitpid() 调用变成非阻塞的，也就是说它会立即返回，父进程可以继续执行其它任务。</p>
+<h3 id="孤儿进程">孤儿进程</h3>
+<p>一个父进程退出，而它的一个或多个子进程还在运行，那么这些子进程将成为孤儿进程。</p>
+<p>孤儿进程将被 init 进程（进程号为 1）所收养，并由 init 进程对它们完成状态收集工作。</p>
+<p>由于孤儿进程会被 init 进程收养，所以孤儿进程不会对系统造成危害。</p>
+<h3 id="僵尸进程">僵尸进程</h3>
+<p>一个子进程的进程描述符在子进程退出时不会释放，只有当父进程通过 wait() 或 waitpid() 获取了子进程信息后才会释放。如果子进程退出，而父进程并没有调用 wait() 或 waitpid()，那么子进程的进程描述符仍然保存在系统中，这种进程称之为僵尸进程。</p>
+<p>僵尸进程通过 ps 命令显示出来的状态为 Z（zombie）。</p>
+<p>系统所能使用的进程号是有限的，如果产生大量僵尸进程，将因为没有可用的进程号而导致系统不能产生新的进程。</p>
+<p>要消灭系统中大量的僵尸进程，只需要将其父进程杀死，此时僵尸进程就会变成孤儿进程，从而被 init 进程所收养，这样 init 进程就会释放所有的僵尸进程所占有的资源，从而结束僵尸进程。</p>
+<h2 id="系统诊断命令">系统诊断命令</h2>
+<h3 id="free">free</h3>
+<p>需要学会查看系统内存 未使用的内容 = free + buffers + cached -m 单位转换M -g 单位转换为G</p>
+<h3 id="vmstat">vmstat</h3>
+<p>分析系统问题<br>
+r (running) 列表运行和等待的进程数量，如果长期大于1说明cpu不足，需要cpu。<br>
+b 列表等待资源的进程数，如等待I/O，或者内存交换等。</p>
+<p>cpu使用状态<br>
+us 表示用户进程cpu时间占比，如果长期大于50%,需要考虑优化用户程序。<br>
+sy 显示了内核进程cpu时间占比，如果us + sy 大于80%说明可能存在CPU不足。<br>
+wa 显示了IO等待所占用的CPU时间的百分比，说明IO等待严重，磁盘大量随机访问造成的，也可能是磁盘或者磁盘访问控制器带宽瓶颈造成的<br>
+id cpu处于空闲的百分比</p>
+<p>system显示采集间隔中观察到的每秒设备中断数。<br>
+in 列表在某一时间间隔中观察到的每秒设备中断数<br>
+cs 表示每秒产生的上下文切换次数</p>
+<p>memory 内存情况<br>
+swpd 切换到内存交换区的内存数量，如果swpd的值不为0，或者比较大，只要si,so的长期为0，系统性能还是正常<br>
+free 当前的空闲页面列表中内存数量(k表示)<br>
+buff 作为buffer cache的内存数量，一般对块设备的读写才需要缓冲。<br>
+cache 作为page cache的内存数量，一般作为文件系统的cache，如果cache较大，说明用到cache的文件较多，如果此时IO中bi比较小，说明文件系统效率比较好。</p>
+<p>swap<br>
+si 由内存进入内存交换区数量<br>
+so 有内存交换区进入内存数量</p>
+<p>IO<br>
+bi 从块设备读入数据的总量（读磁盘）（每秒kb）<br>
+bo 块设备写入数据的总量(写磁盘)（每秒kb）<br>
+这里我们设置的bi+bo参考值为1000，如果超过1000，而且wa值较大应该考虑均衡磁盘负载，可以结合iostat输出来分析。</p>
+<h3 id="dd">dd</h3>
+<p>模拟读写磁盘操作</p>
+<h3 id="top">top</h3>
+<p>系统</p>
+<h3 id="watch-more-procnetdev">watch more /proc/net/dev</h3>
+<p>用于定位丢包，错报情况，以便看望了瓶颈</p>
+<h3 id="netstat">netstat</h3>
+<p>查看端口</p>
+<h3 id="ping">ping</h3>
+<h3 id="traceroute-ip">traceroute ip</h3>
+<p>路由追踪</p>
+<h3 id="dig">dig</h3>
+<p>查看域名解析</p>
+<h3 id="dmesg">dmesg</h3>
+<p>查看系统日志</p>
+<h3 id="df">df</h3>
+<p>查看磁盘剩余空间</p>
+<h3 id="du">du</h3>
+<p>查看磁盘使用空间</p>
+<h3 id="ps">ps</h3>
+<p>查看进程</p>
+<h3 id="tcpdump">tcpdump</h3>
+<p>抓包</p>
+<h3 id="traceroute">traceroute</h3>
+<p>路由追踪</p>
+
+            </div>
+            <hr style="width: 80%;">
+            
+            <div class="donateContainer">
+                <span class="donatebtn">赏</span>
+            </div>
+            <div class="donateContainer">
+                <img src="" alt="" class="donate">
+            </div>
+            
+            <div class="postfooter">
+                <ul class="post-copyright">
+                    <li><strong>文章作者：</strong></li>
+            <li><strong>原文链接：</strong>https://greatewei.github.io/post/linux/</li>
+            <li><strong>版权声明：</strong>本博客所有文章除特别声明外，均采用<i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA
+                许可协议。转载请注明出处！</li>
+            </ul>
+        </div>
+        
+            <div class="shareContainer">
+                <div class="share" style="height:30px;background: white;">
+                    <a class="qq" href=""><i><img class="shareicon"
+                                src="https://greatewei.github.io/media/images/qqs.png" alt=""></i></a>
+                    <a class="wechat" href=""><i><img class="shareicon"
+                                src="https://greatewei.github.io/media/images/wechats.png" alt=""></i></a>
+                    <a class="weibo" href=""><i><img class="shareicon"
+                                src="https://greatewei.github.io/media/images/weibos.png" alt=""></i></a>
+                    <a class="qzone" href=""><i><img class="shareicon"
+                                src="https://greatewei.github.io/media/images/qzones.png" alt=""></i></a>
+                    <a class="douban" href=""><i><img class="shareicon"
+                                src="https://greatewei.github.io/media/images/doubans.png" alt=""></i></a>
+                    <a class="facebook" href=""><i><img class="shareicon"
+                                src="https://greatewei.github.io/media/images/facebooks.png" alt=""></i></a>
+                    <a class="twitter" href=""><i><img class="shareicon"
+                                src="https://greatewei.github.io/media/images/twitter.png" alt=""></i></a>
+                </div>
+            </div>
+            
+        <div id="otherpost">
+            
+            <a  data-pjax class="prev-post-pc" href="https://greatewei.github.io/post/cr/"  style="color: black;">
+                <div id="ppcontainer">
+                    
+                    
+                    <img src="/media/images/custom-postdefaultimage.jpeg" style="width: 100%;" class="opimg">
+                    
+                    
+                    <h4 class="optitle">Crontab </h4>
+                </div>
+            </a>
+            <div class="prev-post">
+                上一篇 <a  data-pjax href="https://greatewei.github.io/post/cr/">Crontab </a>
+            </div>
+            
+            
+            <a data-pjax class="next-post-pc" href="https://greatewei.github.io/post/ji-suan-ji-cao-zuo-xi-tong-lian-jie/"  style="color: black;">
+                <div id="npcontainer">
+                    
+                    
+                    <img src="/media/images/custom-postdefaultimage.jpeg" style="width: 100%;" class="opimg">
+                    
+                    
+                    <h4 class="optitle">计算机操作系统-链接</h4>
+                </div>
+            </a>
+            <div class="next-post">
+                下一篇 <a  data-pjax href="https://greatewei.github.io/post/ji-suan-ji-cao-zuo-xi-tong-lian-jie/">计算机操作系统-链接</a>
+            </div>
+            
+        </div>
+    </div>
+    </div>
+    </div>
+    <!-- 弹窗 -->
+    <div id="myModal" class="modal">
+        <img class="modal-content" id="img01">
+    </div>
+</body>
+<script>
+    //文章阅读热度
+    var pl = $("#pl").html();
+    var rootaddr = $("#rootaddr").html();
+    pl = pl.replace(rootaddr, "");
+    $("#hotnum").attr('id', pl);
+</script>
+                    <div class="toc-container">
+                        <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#sync">sync</a></li>
+<li><a href="#path">PATH</a></li>
+<li><a href="#%E7%A3%81%E7%9B%98%E7%9A%84%E6%96%87%E4%BB%B6%E5%90%8D">磁盘的文件名</a></li>
+<li><a href="#%E5%88%86%E5%8C%BA">分区</a>
+<ul>
+<li><a href="#mbr">MBR</a></li>
+</ul>
+</li>
+<li><a href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F">文件系统</a>
+<ul>
+<li><a href="#%E5%88%86%E5%8C%BA%E4%B8%8E%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F">分区与文件系统</a></li>
+<li><a href="#%E7%BB%84%E6%88%90">组成</a></li>
+<li><a href="#%E6%96%87%E4%BB%B6%E8%AF%BB%E5%8F%96">文件读取</a></li>
+<li><a href="#%E7%A3%81%E7%9B%98%E7%A2%8E%E7%89%87">磁盘碎片</a></li>
+<li><a href="#block">block</a></li>
+<li><a href="#inode">inode</a></li>
+<li><a href="#%E7%9B%AE%E5%BD%95">目录</a></li>
+<li><a href="#%E6%97%A5%E5%BF%97">日志</a></li>
+<li><a href="#%E6%8C%82%E8%BD%BD">挂载</a></li>
+<li><a href="#%E7%9B%AE%E5%BD%95%E9%85%8D%E7%BD%AE">目录配置</a></li>
+</ul>
+</li>
+<li><a href="#%E6%96%87%E4%BB%B6">文件</a>
+<ul>
+<li><a href="#%E6%96%87%E4%BB%B6%E5%B1%9E%E6%80%A7">文件属性</a></li>
+<li><a href="#%E6%96%87%E4%BB%B6%E4%B8%8E%E7%9B%AE%E5%BD%95%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C">文件与目录的基本操作</a></li>
+<li><a href="#%E9%93%BE%E6%8E%A5">链接</a></li>
+</ul>
+</li>
+<li><a href="#%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86">进程管理</a>
+<ul>
+<li><a href="#%E6%9F%A5%E7%9C%8B%E8%BF%9B%E7%A8%8B">查看进程：</a></li>
+<li><a href="#%E6%9F%A5%E7%9C%8B%E5%8D%A0%E7%94%A8%E7%AB%AF%E5%8F%A3%E7%9A%84%E8%BF%9B%E7%A8%8B">查看占用端口的进程</a></li>
+<li><a href="#%E8%BF%9B%E7%A8%8B%E7%8A%B6%E6%80%81">进程状态</a></li>
+<li><a href="#sigchld">SIGCHLD</a></li>
+<li><a href="#wait">wait()</a></li>
+<li><a href="#waitpid">waitpid()</a></li>
+<li><a href="#%E5%AD%A4%E5%84%BF%E8%BF%9B%E7%A8%8B">孤儿进程</a></li>
+<li><a href="#%E5%83%B5%E5%B0%B8%E8%BF%9B%E7%A8%8B">僵尸进程</a></li>
+</ul>
+</li>
+<li><a href="#%E7%B3%BB%E7%BB%9F%E8%AF%8A%E6%96%AD%E5%91%BD%E4%BB%A4">系统诊断命令</a>
+<ul>
+<li><a href="#free">free</a></li>
+<li><a href="#vmstat">vmstat</a></li>
+<li><a href="#dd">dd</a></li>
+<li><a href="#top">top</a></li>
+<li><a href="#watch-more-procnetdev">watch more /proc/net/dev</a></li>
+<li><a href="#netstat">netstat</a></li>
+<li><a href="#ping">ping</a></li>
+<li><a href="#traceroute-ip">traceroute ip</a></li>
+<li><a href="#dig">dig</a></li>
+<li><a href="#dmesg">dmesg</a></li>
+<li><a href="#df">df</a></li>
+<li><a href="#du">du</a></li>
+<li><a href="#ps">ps</a></li>
+<li><a href="#tcpdump">tcpdump</a></li>
+<li><a href="#traceroute">traceroute</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+                    </div>
+                    <div class="tog">
+                        <div class="toggleContainer">
+                            <div class="toggle">
+                                <i class="fas fa-angle-double-up"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <!---------------------------- 评论系统👇 ------------------------->
+                    <div id="comment" class="comment">
+                        <div class="commentcontainer">
+                            
+                                
+                                    <p>请到客户端“主题--自定义配置--配置”中填入leancloud_appID和key</p>
+                                
+                            
+                        </div>
+                    </div>
+                    <!---------------------------- 评论系统👆 ------------------------->
+                </div>
+                <!-- main标签，pjax渲染时加载以上内容👆 -->
+                <div class="col-md-1 col-lg-2"></div>
+                <div id="bg">
+                </div>
+            </div>
+            <!-- ----------------左侧菜单栏html 👆-------------------------------------->
+            
+        </div>
+        <!-- aplayer播放器加载👇 -->
+            
+            <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css">
+</head>
+
+<body>
+    <div class="miniMode">
+        <meting-js id="myaplayer" server="netease" type="playlist" fixed="true" order="default" muted="muted">
+        </meting-js>
+    </div>
+</body>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+<script>
+    function aplayerInit() {
+        var aplayerid = "3631315791";
+        var aplayerserver = "tencent";
+        var aplayerorder = "default";
+        var aplayerautoplay = "true";
+        var aplayer = $("#myaplayer");
+        aplayer.attr("server", aplayerserver);
+        aplayer.attr("id", aplayerid);
+        aplayer.attr("order", aplayerorder);
+        if (aplayerautoplay == "true")
+            aplayer.attr("autoplay", "true");
+    }
+    aplayerInit();
+</script>
+
+<script src="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/js/Aplayer.min.js"></script>
+<!-- require MetingJS -->
+<script src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js"></script>
+
+<script>
+    function aplayerbtnInit() {
+        var player = document.querySelectorAll('meting-js')[0].aplayer;
+        if(player==undefined)return false;
+        player.lrc.hide();
+        var mbabtn = $("#mbaplayer");
+        if (player.paused == false) {
+            mbabtn.removeClass("fa-play-circle-o");
+            mbabtn.addClass("fa-pause-circle");
+        } else {
+            mbabtn.addClass("fa-play-circle-o");
+            mbabtn.removeClass("fa-pause-circle");
+        }
+    }
+
+    function aplayerPlay() {
+        var player = document.querySelectorAll('meting-js')[0].aplayer;
+        var mbabtn = $("#mbaplayer");
+        if (player.paused == true) {
+            player.play();
+            mbabtn.removeClass("fa-play-circle-o");
+            mbabtn.addClass("fa-pause-circle");
+        } else {
+            player.pause();
+            mbabtn.addClass("fa-play-circle-o");
+            mbabtn.removeClass("fa-pause-circle");
+        }
+    }
+</script>
+            
+        <!-- aplayer播放器加载👆 -->
+    </div>
+    
+
+    <!-- 背景图加载方式👇 -->
+    <div id="bgchoice" style="display: none">default
+                </div>
+                
+                <div id="bgurl" style="display:none">/media/images/bgimg.png</div>
+                
+    <!-- 背景图加载方式👆 -->
+</body>
+
+<script>
+    //初始化
+    //更换twikoo头像
+    setTimeout(replaceAvatar,1000);
+    setTimeout(replaceAvatar,2000);
+    setTimeout(replaceAvatar,8000);
+    // --------为每张图片添加懒加载（lazyload）标签-->懒加载功能 👇------------
+    lazyload();
+    //为文章内所有代码块添加代码复制功能 👇
+    codeinit();
+    // ------代码高亮显示功能-------------
+    hljs.initHighlightingOnLoad();
+    if (shareChoice)
+        shareInit();
+    if (donateChoice)
+        donateInit();
+</script>
+
+<!------------------ 加载live2d模型功能（看板娘）👇 ---------------->
+
+<script type="text/javascript">
+    var message_Path = '/live2d/'
+    var home_Path = document.getElementById("domainname").innerHTML + "/"; //此处修改为你的域名，必须带斜杠
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/js/live2d.js"></script>
+<script type="text/javascript" src="https://greatewei.github.io/media/live2d/js/message.js"></script>
+<script type="text/javascript">
+    loadlive2d("live2d", "https://greatewei.github.io/media/live2d/assets/tororo.model.json");
+</script>
+
+<!------------------ 加载live2d模型功能（看板娘）👆 ---------------->
+
+
+<!----------------------- 返回顶部按钮功能👇 --------------------->
+<script>
+    $(function () {
+        $('.toggleContainer').click(function () {
+            $('html,body').animate({
+                scrollTop: '0px'
+            }, 800);
+        });
+        $(window).scroll(function () {
+            var st = $(window).scrollTop();
+            if (st > 30) {
+                $(".toggleContainer").fadeIn(400);
+            } else {
+                $(".toggleContainer").fadeOut(100);
+            }
+        });
+    });
+</script>
+<!----------------------- 返回顶部按钮功能👆 --------------------->
+
+
+<!------------ 加载全局背景图功能👇（开始时没有写好，这功能有点鸡肋/(ㄒoㄒ)/~~） -->
+<script>
+    var bgchoice = $('#bgchoice').html();
+    var bg = $('#bg');
+    var bgurl = document.getElementById("bgurl").innerHTML;
+    if (bgchoice == 'default')
+        for (var i = 0; i < 3; i++)
+            bgurl = bgurl.replace("\\", "/");
+    bg.css("background", "url('" + bgurl + "')");
+</script>
+<!------------ 加载全局背景图功能👆（开始时没有写好，这功能有点鸡肋/(ㄒoㄒ)/~~） -->
+
+
+
+
+<script src="https://greatewei.github.io/media/js/index.js"></script>
+
+
+<script>
+    //加载后的事件同步（阅读量、移动端评论等
+    window.onload = function () {
+    //代码块高亮渲染
+    document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
+    });
+        getHotnum();
+        var sharepc = $(".share").eq(0).html();
+        $(".share").eq(1).html(sharepc);   //插件只会寻找一个分享标签渲染，所以需要手动添加到移动端
+        aplayerbtnInit();
+        $(".hljs").css({
+            "padding": "20px"
+        })
+    }
+</script>
+
+<!-- <script src="https://greatewei.github.io/media/js/av-min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@3.13.0/dist/av-min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.6.1/dist/av-live-query-min.js"></script> -->

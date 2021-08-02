@@ -253,7 +253,7 @@ croc适用场景
                         src='https://greatewei.github.io/media/images/music.png' alt="音乐播放器" class="musicbtn"></i></a>
         </div>
         <div class="avatar-border">
-            <img src="https://greatewei.github.io/images/avatar.png?v=1627625484158" class="avatar">
+            <img src="https://greatewei.github.io/images/avatar.png?v=1627875011125" class="avatar">
         </div>
         <div class="sitename">Great Wei</div>
         <span class="description" data-text='[""]'>&nbsp;</span>
@@ -1148,7 +1148,7 @@ ipv6 优先和 ipv4 回退<br>
 <h3 id="receive">receive</h3>
 <p>croc code 可以添加--relay参数指定relay， 如果未指定默认使用croc.schollz.com:9009， relay查找到code对应的sender的连接地址，reveive连接上sender的指定room， 输入password(可选)，进入room后此时存在两个连接了，sender开始将文件数据传输给receive，结束后断开连接，关闭room</p>
 <h2 id="如何实现断点续传">如何实现断点续传</h2>
-<p>上传过程中记录偏移，读取文件直接seek到指定位置开始读取数据，进行文件传输</p>
+<p>上传过程中记录读取块位置，使用固定块传输，类似dd命令，进行文件传输</p>
 
             </div>
             <hr style="width: 80%;">

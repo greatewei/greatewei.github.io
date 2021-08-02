@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://greatewei.github.io</id>
     <title>Great Wei</title>
-    <updated>2021-07-30T06:11:26.008Z</updated>
+    <updated>2021-08-02T03:30:13.774Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://greatewei.github.io"/>
     <link rel="self" href="https://greatewei.github.io/atom.xml"/>
@@ -39,7 +39,7 @@ ipv6 优先和 ipv4 回退<br>
 <h3 id="receive">receive</h3>
 <p>croc code 可以添加--relay参数指定relay， 如果未指定默认使用croc.schollz.com:9009， relay查找到code对应的sender的连接地址，reveive连接上sender的指定room， 输入password(可选)，进入room后此时存在两个连接了，sender开始将文件数据传输给receive，结束后断开连接，关闭room</p>
 <h2 id="如何实现断点续传">如何实现断点续传</h2>
-<p>上传过程中记录偏移，读取文件直接seek到指定位置开始读取数据，进行文件传输</p>
+<p>上传过程中记录读取块位置，使用固定块传输，类似dd命令，进行文件传输</p>
 ]]></content>
     </entry>
     <entry>
